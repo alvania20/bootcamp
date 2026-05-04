@@ -11,6 +11,7 @@ body {
   color: var(--dark-text);
   scroll-behavior: smooth;
   line-height: 1.6;
+  background-color: #fff;
 }
 
 /* --- Navigasi --- */
@@ -21,7 +22,7 @@ body {
 }
 
 .navbar-brand {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.5rem;
   letter-spacing: -0.5px;
 }
@@ -46,68 +47,68 @@ body {
   background-color: var(--primary-orange);
   color: white !important;
   border-radius: 8px;
-  padding: 12px 30px;
+  padding: 10px 25px;
   font-weight: 600;
   border: none;
   transition: 0.3s;
-  box-shadow: 0 4px 10px rgba(253, 126, 20, 0.2);
 }
 
 .btn-orange:hover {
   background-color: #e86c00;
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(253, 126, 20, 0.3);
 }
 
-/* --- Hero Section (Terupdate) --- */
+/* --- Hero Section --- */
 .hero {
-  padding: 60px 0;
-  overflow: hidden;
-  text-align: center; /* Menyesuaikan dengan referensi gambar yang terpusat di mobile */
+  padding: 100px 0;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
 }
 
 .hero .greeting {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 5px;
 }
 
 .hero .name {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary-orange);
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 .hero h1 {
-  font-size: 3.5rem;
+  font-size: 4rem;
   font-weight: 800;
   line-height: 1.1;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
 }
 
-/* Container Foto di bawah Nama - Disesuaikan agar berada di tengah */
+.hero-description {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 30px;
+  max-width: 500px;
+}
+
+/* Image Styling */
 .hero-img-wrapper {
   position: relative;
   display: flex;
-  justify-content: center;
-  margin: 2rem 0;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-img-circle {
-  width: 280px; /* Ukuran disesuaikan agar proporsional di bawah nama */
-  height: 280px;
+  width: 350px;
+  height: 350px;
   background-color: #ffffff;
   border-radius: 50%;
   overflow: hidden;
-  border: 8px solid var(--border-circle);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-  transition: transform 0.4s ease;
-}
-
-.hero-img-circle:hover {
-  transform: scale(1.05);
+  border: 12px solid var(--border-circle);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 .hero-img-circle img {
@@ -116,144 +117,109 @@ body {
   object-fit: cover;
 }
 
-.hero-description {
-  max-width: 600px;
-  color: #666;
-  font-size: 1.1rem;
-  margin: 0 auto 2rem auto;
+.social-icons {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
 }
 
-/* --- About Me Cards --- */
+.social-icons i {
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.social-icons i:hover {
+  color: var(--primary-orange) !important;
+}
+
+/* --- Section Styling --- */
+.section-title {
+  font-weight: 800;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.section-subtitle {
+  color: #777;
+  margin-bottom: 50px;
+}
+
+/* --- About Me Grid --- */
 .info-card {
   background: #fff;
-  padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
-  height: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  transition: 0.3s ease;
-}
-
-.info-card:hover {
-  transform: translateY(-5px);
+  gap: 15px;
+  height: 100%;
 }
 
 .info-icon {
   background: var(--border-circle);
   color: var(--primary-orange);
-  min-width: 50px;
-  height: 50px;
+  padding: 12px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
 }
 
 .info-label {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 0.85rem;
+  font-weight: 700;
   margin: 0;
 }
 
 .info-value {
-  font-weight: 600;
+  font-size: 0.85rem;
+  color: #666;
   margin: 0;
-  font-size: 1rem;
 }
 
-.section-title {
-  font-weight: 700;
-  margin-bottom: 40px;
-  display: inline-block;
-  border-bottom: 4px solid var(--primary-orange);
-  padding-bottom: 5px;
-}
-
-/* --- Portofolio Card --- */
-.portfolio-card {
+/* --- Portofolio --- */
+.project-card {
   border: none;
-  border-radius: 20px;
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  background: #fff;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: 0.3s;
 }
 
-.portfolio-img-container {
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
+.project-card:hover {
+  transform: translateY(-10px);
 }
 
-.portfolio-img-container img {
-  width: 100%;
-  height: 100%;
+.project-img {
+  height: 220px;
   object-fit: cover;
-  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.portfolio-card:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.portfolio-card:hover img {
-  transform: scale(1.15);
-}
-
-.portfolio-body {
-  padding: 24px;
-  flex-grow: 1;
-}
-
-.portfolio-category {
-  font-size: 0.8rem;
+.project-cat {
+  font-size: 0.75rem;
   color: var(--primary-orange);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.portfolio-title {
-  font-weight: 700;
-  font-size: 1.3rem;
-  margin-bottom: 0;
-  color: var(--dark-text);
 }
 
 /* --- Responsivitas --- */
 @media (max-width: 991px) {
-  .hero h1 {
-    font-size: 2.8rem;
-  }
-  .hero-img-circle {
-    width: 260px;
-    height: 260px;
-  }
-}
-
-@media (max-width: 576px) {
-  .hero h1 {
-    font-size: 2.5rem;
-  }
-  .hero-img-circle {
-    width: 220px;
-    height: 220px;
-    margin: 1.5rem 0;
-  }
   .hero {
-    padding: 40px 0;
+    text-align: center;
+    padding: 60px 0;
   }
-
-  .portfolio-card:hover {
-    transform: translateY(-5px);
+  .hero h1 {
+    font-size: 3rem;
+  }
+  .hero-description {
+    margin: 0 auto 30px auto;
+  }
+  .hero-img-wrapper {
+    margin-top: 50px;
+  }
+  .hero-img-circle {
+    width: 280px;
+    height: 280px;
   }
 }
