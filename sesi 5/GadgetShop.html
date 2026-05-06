@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Toko Elektronik Modern</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .product-card {
+        transition: transform 0.2s;
+      }
+      .product-card:hover {
+        transform: translateY(-5px);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <!-- Header & Navigasi -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+      <div
+        class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4"
+      >
+        <h1 class="text-2xl font-bold text-blue-600">GadgetShop</h1>
+
+        <!-- Tombol Filter Kategori -->
+        <div id="category-filters" class="flex flex-wrap justify-center gap-2">
+          <button
+            onclick="filterProducts('semua')"
+            class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+          >
+            Semua
+          </button>
+          <button
+            onclick="filterProducts('laptop')"
+            class="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium hover:bg-gray-100 transition"
+          >
+            Laptop
+          </button>
+          <button
+            onclick="filterProducts('smartphone')"
+            class="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium hover:bg-gray-100 transition"
+          >
+            Smartphone
+          </button>
+          <button
+            onclick="filterProducts('aksesoris')"
+            class="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium hover:bg-gray-100 transition"
+          >
+            Aksesoris
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <h2 class="text-xl font-semibold mb-6">Daftar Produk</h2>
+
+      <!-- Container Produk -->
+      <div
+        id="product-grid"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
+        <!-- Produk akan muncul di sini via JavaScript -->
+      </div>
+
+      <!-- Pesan Jika Produk Kosong -->
+      <div id="empty-state" class="hidden text-center py-20">
+        <p class="text-gray-500 italic">
+          Tidak ada produk ditemukan untuk kategori ini.
+        </p>
+      </div>
+    </main>
+
+    <footer class="bg-white border-t mt-12 py-8">
+      <div class="text-center text-gray-500 text-sm">
+        &copy; 2026 GadgetShop - Tugas E-commerce JavaScript
+      </div>
+    </footer>
+
+    <script>
+      // 1a. Array data produk (Model Data)
+      const products = [
+        {
+          id: 1,
+          nama: "MacBook Pro M2",
+          harga: 21000000,
+          kategori: "laptop",
+          deskripsi: "Laptop performa tinggi untuk profesional kreatif.",
+          gambar:
+            "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80",
+        },
+        {
+          id: 2,
+          nama: "iPhone 15 Pro",
+          harga: 18500000,
+          kategori: "smartphone",
+          deskripsi: "Smartphone dengan kamera titanium dan chip A17 Pro.",
+          gambar:
+            "https://images.unsplash.com/photo-1696446701796-da61225697cc?w=500&q=80",
+        },
+        {
+          id: 3,
+          nama: "Headphone Sony WH-1000XM5",
+          harga: 4500000,
+          kategori: "aksesoris",
+          deskripsi: "Noise cancelling terbaik untuk pengalaman musik premium.",
+          gambar:
+            "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&q=80",
+        },
+        {
+          id: 4,
+          nama: "Asus ROG Zephyrus",
+          harga: 25000000,
+          kategori: "laptop",
+          deskripsi: "Laptop gaming tipis dengan performa monster.",
+          gambar:
+            "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=500&q=80",
+        },
+        {
+          id: 5,
+          nama: "Samsung Galaxy S24 Ultra",
+          harga: 20000000,
+          kategori: "smartphone",
+          deskripsi: "Layar cerah dengan fitur AI tercanggih.",
+          gambar:
+            "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&q=80",
+        },
+        {
+          id: 6,
+          nama: "Mechanical Keyboard",
+          harga: 1200000,
+          kategori: "aksesoris",
+          deskripsi: "Keyboard RGB dengan switch tactile yang nyaman.",
+          gambar:
+            "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=500&q=80",
+        },
+        {
+          id: 7,
+          nama: "Mouse Wireless Logitech",
+          harga: 850000,
+          kategori: "aksesoris",
+          deskripsi: "Mouse ergonomis untuk produktivitas tinggi.",
+          gambar:
+            "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&q=80",
+        },
+        {
+          id: 8,
+          nama: "iPad Air",
+          harga: 9500000,
+          kategori: "smartphone",
+          deskripsi: "Tablet ringan dan kuat untuk belajar dan bekerja.",
+          gambar:
+            "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&q=80",
+        },
+      ];
+
+      // Fungsi untuk format mata uang Rupiah
+      function formatRupiah(angka) {
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(angka);
+      }
+
+      // 1b. Fungsi untuk menampilkan produk dengan looping
+      function renderProducts(filteredList) {
+        const grid = document.getElementById("product-grid");
+        const emptyState = document.getElementById("empty-state");
+
+        // Bersihkan konten lama
+        grid.innerHTML = "";
+
+        if (filteredList.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        } else {
+          emptyState.classList.add("hidden");
+        }
+
+        // Looping produk
+        filteredList.forEach((product) => {
+          const card = `
+                    <div class="product-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                        <div class="h-48 overflow-hidden bg-gray-200">
+                            <img src="${product.gambar}" alt="${product.nama}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x200?text=Produk'">
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-500 mb-1">${product.kategori}</span>
+                            <h3 class="font-bold text-lg mb-2 line-clamp-1">${product.nama}</h3>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">${product.deskripsi}</p>
+                            <div class="flex justify-between items-center mt-auto">
+                                <span class="text-blue-600 font-bold">${formatRupiah(product.harga)}</span>
+                                <button class="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs hover:bg-black transition">Tambah</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+          grid.innerHTML += card;
+        });
+      }
+
+      // 2. Fitur filter sederhana
+      function filterProducts(category) {
+        // Update UI tombol aktif
+        const buttons = document.querySelectorAll("#category-filters button");
+        buttons.forEach((btn) => {
+          if (btn.textContent.toLowerCase() === category) {
+            btn.className =
+              "px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition";
+          } else if (
+            category === "semua" &&
+            btn.textContent.toLowerCase() === "semua"
+          ) {
+            btn.className =
+              "px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition";
+          } else {
+            btn.className =
+              "px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium hover:bg-gray-100 transition";
+          }
+        });
+
+        // Logika filter data
+        if (category === "semua") {
+          renderProducts(products);
+        } else {
+          const filtered = products.filter((p) => p.kategori === category);
+          renderProducts(filtered);
+        }
+      }
+
+      // Inisialisasi awal (tampilkan semua produk saat pertama kali buka)
+      window.onload = () => {
+        renderProducts(products);
+      };
+    </script>
+  </body>
+</html>
