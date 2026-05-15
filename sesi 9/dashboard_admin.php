@@ -2,7 +2,7 @@
 /**
  * HALAMAN DASHBOARD ADMIN
  * Menampilkan ringkasan data dari database: ecommerce_db
- * Fitur: Statistik, Tabel Inventaris, dan Navigasi Cepat
+ * Fitur: Statistik, Tabel Inventaris, dan Logika Hapus Langsung
  */
 
 $host = "localhost";
@@ -14,6 +14,36 @@ $conn = mysqli_connect($host, $user, $pass, $db);
 
 if (!$conn) {
     die("Koneksi gagal: " . mysqli_connect_error());
+}
+
+// ==========================================
+// LOGIKA HAPUS PRODUK (PROSES DI SINI)
+// ==========================================
+if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
+    $id_hapus = mysqli_real_escape_string($conn, $_GET['id']);
+    
+    // Opsional: Ambil nama gambar dulu jika ingin menghapus file fisik di folder img/
+    $res_gambar = mysqli_query($conn, "SELECT gambar FROM products WHERE id = '$id_hapus'");
+    $data_gambar = mysqli_fetch_assoc($res_gambar);
+    
+    // Eksekusi Hapus
+    $query_delete = "DELETE FROM products WHERE id = '$id_hapus'";
+    
+    if (mysqli_query($conn, $query_delete)) {
+        // Hapus file gambar jika ada
+        if ($data_gambar && !empty($data_gambar['gambar'])) {
+            $path = "img/" . $data_gambar['gambar'];
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+        // Redirect kembali ke halaman dashboard untuk membersihkan query string action
+        header("Location: dashboard_admin.php?status=deleted");
+        exit;
+    } else {
+        header("Location: dashboard_admin.php?status=error");
+        exit;
+    }
 }
 
 // 1. Ambil Statistik Ringkas
@@ -83,12 +113,19 @@ $result_produk = mysqli_query($conn, $query_produk);
             </div>
         </header>
 
-        <!-- Alert Notifikasi -->
-        <?php if(isset($_GET['status']) && $_GET['status'] == 'deleted'): ?>
-        <div class="mb-6 p-4 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-2xl font-bold flex items-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-            Produk berhasil dihapus!
-        </div>
+        <!-- Notifikasi -->
+        <?php if(isset($_GET['status'])): ?>
+            <?php if($_GET['status'] == 'deleted'): ?>
+                <div class="mb-6 p-4 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-2xl font-bold flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    Produk berhasil dihapus!
+                </div>
+            <?php elseif($_GET['status'] == 'error'): ?>
+                <div class="mb-6 p-4 bg-red-100 text-red-700 border border-red-200 rounded-2xl font-bold flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                    Gagal menghapus produk.
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <!-- Stats Cards -->
@@ -173,9 +210,9 @@ $result_produk = mysqli_query($conn, $query_produk);
                                     <a href="edit_produk.php?id=<?php echo $row['id']; ?>" class="p-2 bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white rounded-lg transition" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
-                                    <!-- Link diarahkan ke dashboard_admin.php sendiri -->
+                                    <!-- Logika Hapus Langsung di Halaman Ini -->
                                     <a href="dashboard_admin.php?action=delete&id=<?php echo $row['id']; ?>" 
-                                       onclick="return confirm('Hapus produk ini?')"
+                                       onclick="return confirm('Apakah Anda yakin ingin menghapus produk ini?')"
                                        class="p-2 bg-slate-100 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition" title="Hapus">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </a>
@@ -200,7 +237,7 @@ $result_produk = mysqli_query($conn, $query_produk);
             </div>
         </div>
 
-        <!-- Footer Small -->
+        <!-- Footer -->
         <footer class="mt-10 text-center text-slate-400 text-xs font-medium pb-10 uppercase tracking-[0.2em]">
             &copy; <?php echo date('Y'); ?> Panel Admin E-Commerce &bull; Dashboard V.1.0
         </footer>

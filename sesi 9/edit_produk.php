@@ -1,8 +1,6 @@
 <?php
 /**
- * HALAMAN EDIT PRODUK
- * Fitur: Update data, Kategori Baru, & Navigasi Beranda Admin
- * Validasi: Foto bersifat Opsional
+ * HALAMAN EDIT PRODUK (VERSI KOREKSI)
  */
 
 $host = "localhost";
@@ -23,7 +21,7 @@ if (!isset($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-// Ambil data produk
+// Ambil data produk - Pastikan query ini mengambil kolom yang benar
 $result = mysqli_query($conn, "SELECT * FROM products WHERE id = $id");
 $product = mysqli_fetch_assoc($result);
 
@@ -32,27 +30,20 @@ if (!$product) {
     exit;
 }
 
-// Ambil data kategori unik dari tabel products untuk dropdown
 $res_kategori = mysqli_query($conn, "SELECT DISTINCT kategori FROM products WHERE kategori != '' ORDER BY kategori ASC");
 
-// Proses Update
 if (isset($_POST['update'])) {
     $nama      = mysqli_real_escape_string($conn, $_POST['nama_produk']);
     $harga     = $_POST['harga'];
     $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi']);
     $stok      = $_POST['stok'];
 
-    // Cek apakah menggunakan kategori lama atau baru
     if ($_POST['kategori'] == 'BARU' && !empty($_POST['kategori_baru'])) {
         $kategori = mysqli_real_escape_string($conn, $_POST['kategori_baru']);
     } else {
         $kategori = mysqli_real_escape_string($conn, $_POST['kategori']);
     }
 
-    /** * VALIDASI FOTO (OPSIONAL)
-     * Jika ada upload baru, gunakan foto baru.
-     * Jika tidak ada upload, tetap gunakan foto yang sudah ada di database.
-     */
     $filename = $product['gambar']; 
     if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK) {
         $filename = $_FILES['gambar']['name'];
@@ -61,8 +52,9 @@ if (isset($_POST['update'])) {
         move_uploaded_file($tmp_name, "img/" . $filename);
     }
 
+    // KOREKSI: Kolom di DB adalah 'nama_produk', bukan 'nama'
     $query = "UPDATE products SET 
-                nama = '$nama', 
+                nama_produk = '$nama', 
                 harga = '$harga', 
                 kategori = '$kategori', 
                 deskripsi = '$deskripsi', 
@@ -95,7 +87,7 @@ if (isset($_POST['update'])) {
         <div class="flex items-center justify-between mb-10">
             <div>
                 <span class="inline-block px-4 py-1 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-2">Edit Mode</span>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight"><?php echo isset($product['nama']) ? htmlspecialchars($product['nama']) : 'Produk'; ?></h1>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight"><?php echo isset($product['nama_produk']) ? htmlspecialchars($product['nama_produk']) : 'Produk'; ?></h1>
             </div>
             <a href="dashboard_admin.php" class="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-900 hover:text-white transition-all group shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +100,7 @@ if (isset($_POST['update'])) {
             
             <div class="space-y-2">
                 <label class="text-xs font-black uppercase text-slate-400 ml-1">Nama Produk</label>
-                <input type="text" name="nama_produk" value="<?php echo isset($product['nama']) ? htmlspecialchars($product['nama']) : ''; ?>" required 
+                <input type="text" name="nama_produk" value="<?php echo isset($product['nama_produk']) ? htmlspecialchars($product['nama_produk']) : ''; ?>" required 
                     class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium">
             </div>
 
@@ -148,7 +140,6 @@ if (isset($_POST['update'])) {
                         class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium"><?php echo isset($product['deskripsi']) ? htmlspecialchars($product['deskripsi']) : ''; ?></textarea>
             </div>
 
-            <!-- Bagian Gambar (Dibuat Opsional) -->
             <div class="p-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
                 <label class="block text-center text-xs font-black uppercase text-slate-400 mb-4">Ganti Gambar (Opsional)</label>
                 <div class="flex flex-col items-center gap-4">
