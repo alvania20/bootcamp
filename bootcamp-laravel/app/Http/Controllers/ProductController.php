@@ -14,6 +14,27 @@ class ProductController extends Controller
         return view('products.index', compact('products'));
     }
 
+    // Tambah fungsi ini untuk fitur keranjang
+        public function addToCart(Request $request, $id)
+    {
+        $product = \App\Models\Product::findOrFail($id);
+        $cart = session()->get('cart', []);
+
+        if (isset($cart[$id])) {
+            $cart[$id]['quantity']++;
+        } else {
+            $cart[$id] = [
+                'nama' => $product->nama,
+                'harga' => $product->harga,
+                'gambar' => $product->gambar,
+                'quantity' => 1
+            ];
+        }
+
+        session()->put('cart', $cart);
+        return redirect()->route('checkout.index')->with('success', 'Produk ditambahkan ke keranjang!');
+    }
+
     public function create()
     {
         return view('products.create');
@@ -34,9 +55,9 @@ class ProductController extends Controller
 
         if ($request->hasFile('gambar')) {
             $image = $request->file('gambar');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('img'), $imageName);
-            $input['gambar'] = $imageName;
+            $name = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('img'), $name);
+            $input['gambar'] = $name;
         }
 
         Product::create($input);

@@ -30,6 +30,12 @@
                                 <span class="font-black text-slate-900 text-sm">Rp {{ number_format($product->harga, 0, ',', '.') }}</span>
                                 <a href="{{ route('products.show', $product->id) }}" class="text-indigo-600 text-xs font-bold">Detail</a>
                             </div>
+                        <form action="{{ route('products.addToCart', $product->id) }}" method="POST" class="mt-4">
+                            @csrf
+                            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                                Tambah ke Keranjang
+                            </button>
+                        </form>
                         </div>
                     </div>
                 @endforeach

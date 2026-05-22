@@ -39,7 +39,7 @@
                 <div class="space-y-4">
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                         <span class="text-sm font-semibold text-slate-600">Sistem Database</span>
-                        <span class="text-sm font-bold text-emerald-600">Terhubung (Eloquent)</span>
+                        <span class="text-sm font-bold text-emerald-600">Terhubung (Connected)</span>
                     </div>
                 </div>
             </div>

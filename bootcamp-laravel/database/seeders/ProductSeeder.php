@@ -89,7 +89,16 @@ class ProductSeeder extends Seeder
                 'kategori' => 'Audio',
                 'deskripsi' => 'Headphone nirkabel dengan teknologi peredam bising (Active Noise Cancelling) tercanggih di industri audio saat ini. Menghasilkan suara resolusi tinggi yang luar biasa jernih.',
                 'gambar' => 'headphone-sony-wh1000xm5.jpg'
+            ],
+             [
+                'nama' => 'Speaker Bluetooth JBL Flip 6',
+                'harga' => 899000,
+                'stok' => 18,
+                'kategori' => 'Audio',
+                'deskripsi' => 'Speaker portabel dengan kualitas suara yang kuat dan bass yang dalam. Tahan air dan debu, cocok untuk menemani aktivitas outdoor maupun indoor Anda.',
+                'gambar' => 'speaker-jbl-flip6.jpg'
             ]
+           
         ];
 
         foreach ($products as $product) {
