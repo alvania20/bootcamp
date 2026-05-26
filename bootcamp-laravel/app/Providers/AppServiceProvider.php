@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth; // Jangan lupa import ini
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Pindahkan logika login dummy ke dalam sini
+        if (!Auth::check()) {
+            Auth::loginUsingId(1);
+        }
     }
 }

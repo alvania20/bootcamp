@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Ubah Produk - ' . $product->nama)
+@section('title', 'Ubah Produk - ' . $product->name)
 
 @section('content')
 <div class="max-w-2xl mx-auto">
@@ -24,47 +24,47 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Nama Produk</label>
-                    <input type="text" name="nama" value="{{ $product->nama }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
+                    <input type="text" name="name" value="{{ $product->name }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Kategori</label>
-                    <select name="kategori" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
-                        <option value="Smartphone" {{ $product->kategori == 'Smartphone' ? 'selected' : '' }}>Smartphone</option>
-                        <option value="Laptop" {{ $product->kategori == 'Laptop' ? 'selected' : '' }}>Laptop</option>
-                        <option value="Audio" {{ $product->kategori == 'Audio' ? 'selected' : '' }}>Audio</option>
-                        <option value="Aksesoris" {{ $product->kategori == 'Aksesoris' ? 'selected' : '' }}>Aksesoris</option>
+                    <select name="category_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
+                        <option value="1" {{ $product->category_id == 1 ? 'selected' : 'Laptop' }}>Laptop</option>
+                        <option value="2" {{ $product->category_id == 2 ? 'selected' : 'Aksesoris' }}>Aksesoris</option>
+                        <option value="3" {{ $product->category_id == 3 ? 'selected' : 'Smartphone' }}>Smartphone</option>
+                        <option value="4" {{ $product->category_id == 4 ? 'selected' : 'Audio' }}>Audio</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Harga (Rupiah)</label>
-                    <input type="number" name="harga" value="{{ $product->harga }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
+                    <input type="number" name="price" value="{{ $product->price }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Stok (Unit)</label>
-                    <input type="number" name="stok" value="{{ $product->stok }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
+                    <input type="number" name="stock" value="{{ $product->stock }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Deskripsi Lengkap</label>
-                <textarea name="deskripsi" rows="4" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">{{ $product->deskripsi }}</textarea>
+                <textarea name="description" rows="4" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">{{ $product->description }}</textarea>
             </div>
 
             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <div class="text-center md:col-span-1">
                     <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Foto Saat Ini</span>
-                    @if($product->gambar)
-                        <img src="{{ asset('img/' . $product->gambar) }}" alt="[Gambar {{ $product->nama }}]" class="w-24 h-24 object-cover mx-auto rounded-xl shadow-sm border border-slate-200">
+                    @if($product->image)
+                        <img src="{{ asset('img/' . $product->image) }}" alt="[Image {{ $product->name }}]" class="w-24 h-24 object-cover mx-auto rounded-xl shadow-sm border border-slate-200">
                     @else
                         <span class="text-xs text-slate-500">Tidak ada foto</span>
                     @endif
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Ganti Foto Baru (Opsional)</label>
-                    <input type="file" name="gambar" accept="image/*" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <input type="file" name="image" accept="image/*" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                 </div>
             </div>
 

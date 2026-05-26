@@ -10,7 +10,7 @@
             <div class="space-y-4">
                 @forelse($cartItems as $id => $item)
                 <div class="flex items-center space-x-4 border-b pb-4">
-                    <img src="{{ asset('img/' . $item['gambar']) }}" alt="{{ $item['nama'] }}" class="w-16 h-16 object-cover rounded">
+                    <img src="{{ asset('img/' . $item['image']) }}" alt="{{ $item['nama'] }}" class="w-16 h-16 object-cover rounded">
                     <div class="flex-1">
                         <h3 class="font-medium">{{ $item['nama'] }}</h3>
                         <div class="flex items-center mt-2">
