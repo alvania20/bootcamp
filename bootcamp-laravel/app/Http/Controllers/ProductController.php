@@ -10,46 +10,38 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    /**
-     * Menampilkan katalog produk dengan filter kategori
-     */
     public function index(Request $request)
     {
         $categories = Category::all();
-        $query = Product::with('category');
-
-        // Filter berdasarkan kategori (slug)
-        if ($request->filled('category')) {
+        $query = Product::query();
+        if ($request->has('category') && !empty($request->category)) {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
-
         $products = $query->latest()->paginate(9);
         return view('products.index', compact('products', 'categories'));
     }
 
-    /**
-     * Menampilkan detail produk
-     */
     public function show($id)
     {
         $product = Product::findOrFail($id);
         return view('products.show', compact('product'));
     }
 
-    /**
-     * Halaman form tambah produk
-     */
     public function create()
     {
         $categories = Category::all();
         return view('products.create', compact('categories'));
     }
 
-    /**
-     * Menyimpan produk baru
-     */
+    public function edit($id)
+    {
+        $product = Product::findOrFail($id);
+        $categories = Category::all();
+        return view('products.edit', compact('product', 'categories'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -61,8 +53,12 @@ class ProductController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // Upload Gambar
         $imageName = time() . '.' . $request->image->extension();
+        
+        if (!File::exists(public_path('img'))) {
+            File::makeDirectory(public_path('img'), 0755, true);
+        }
+        
         $request->image->move(public_path('img'), $imageName);
 
         Product::create([
@@ -78,19 +74,6 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    /**
-     * Halaman form edit produk
-     */
-    public function edit($id)
-    {
-        $product = Product::findOrFail($id);
-        $categories = Category::all();
-        return view('products.edit', compact('product', 'categories'));
-    }
-
-    /**
-     * Memperbarui produk
-     */
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -102,17 +85,14 @@ class ProductController extends Controller
         ]);
 
         $product = Product::findOrFail($id);
-        $data = $request->all();
+        $data = $request->except(['image']);
         $data['slug'] = Str::slug($request->name);
 
-        // Jika ada file gambar baru
         if ($request->hasFile('image')) {
-            // Hapus gambar lama
             if ($product->image && File::exists(public_path('img/' . $product->image))) {
                 File::delete(public_path('img/' . $product->image));
             }
             
-            // Upload gambar baru
             $imageName = time() . '.' . $request->image->extension();
             $request->image->move(public_path('img'), $imageName);
             $data['image'] = $imageName;
@@ -123,14 +103,10 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
-    /**
-     * Menghapus produk
-     */
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
 
-        // Hapus file gambar
         if ($product->image && File::exists(public_path('img/' . $product->image))) {
             File::delete(public_path('img/' . $product->image));
         }

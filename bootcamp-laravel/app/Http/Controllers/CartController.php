@@ -9,9 +9,11 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
+    /**
+     * Menampilkan isi keranjang pengguna.
+     */
     public function index()
     {
-        // Pastikan user sudah login untuk melihat keranjang
         if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Silakan login untuk melihat keranjang.');
         }
@@ -21,20 +23,20 @@ class CartController extends Controller
             ->get();
 
         $totalPrice = $cartItems->sum(function ($item) {
-            return $item->product->price * $item->quantity;
+            return ($item->product->price ?? 0) * $item->quantity;
         });
 
         return view('cart.index', compact('cartItems', 'totalPrice'));
     }
 
+    /**
+     * Menambah produk ke keranjang.
+     */
     public function store(Request $request, $productId)
     {
-        // 1. WAJIB LOGIN untuk menggunakan keranjang
         if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Silakan login untuk menambah produk ke keranjang.');
         }
-
-        $userId = Auth::id();
 
         $request->validate([
             'quantity' => 'nullable|integer|min:1'
@@ -47,7 +49,7 @@ class CartController extends Controller
             return redirect()->back()->with('error', 'Stok produk tidak mencukupi!');
         }
 
-        $cartItem = Cart::where('user_id', $userId)
+        $cartItem = Cart::where('user_id', Auth::id())
             ->where('product_id', $productId)
             ->first();
 
@@ -59,7 +61,7 @@ class CartController extends Controller
             $cartItem->update(['quantity' => $newQuantity]);
         } else {
             Cart::create([
-                'user_id' => $userId,
+                'user_id' => Auth::id(),
                 'product_id' => $productId,
                 'quantity' => $quantity
             ]);
@@ -68,5 +70,37 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    // ... (Fungsi update, destroy, dll tetap sama)
+    /**
+     * Memperbarui jumlah item di keranjang.
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        // Pastikan item milik user yang sedang login
+        $cartItem = Cart::where('user_id', Auth::id())->findOrFail($id);
+        
+        $product = $cartItem->product;
+        if ($product->stock < $request->quantity) {
+            return redirect()->back()->with('error', 'Stok tidak mencukupi untuk jumlah tersebut.');
+        }
+
+        $cartItem->update(['quantity' => $request->quantity]);
+
+        return redirect()->route('cart.index')->with('success', 'Jumlah barang berhasil diperbarui.');
+    }
+
+    /**
+     * Menghapus item dari keranjang.
+     */
+    public function destroy($id)
+    {
+        // Pastikan item milik user yang sedang login
+        $cartItem = Cart::where('user_id', Auth::id())->findOrFail($id);
+        $cartItem->delete();
+
+        return redirect()->route('cart.index')->with('success', 'Barang berhasil dihapus dari keranjang.');
+    }
 }

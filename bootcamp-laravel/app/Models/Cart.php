@@ -9,17 +9,24 @@ class Cart extends Model
 {
     use HasFactory;
 
+    // Mengubah tabel menjadi 'carts' agar sesuai dengan struktur database Anda
+    protected $table = 'carts';
+
     protected $fillable = ['user_id', 'product_id', 'quantity'];
 
-    // Relasi ke User
+    /**
+     * Relasi ke User
+     */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(\App\Models\User::class);
     }
 
-    // Relasi ke Product
+    /**
+     * Relasi ke Product
+     */
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(\App\Models\Product::class);
     }
 }

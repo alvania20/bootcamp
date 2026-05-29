@@ -9,7 +9,7 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('categories')->insert([
+        DB::table('product_categories')->insert([
             ['id' => 1, 'name' => 'Laptop', 'slug' => 'laptop'],
             ['id' => 2, 'name' => 'Aksesoris', 'slug' => 'aksesoris'],
             ['id' => 3, 'name' => 'Smartphone', 'slug' => 'smartphone'],

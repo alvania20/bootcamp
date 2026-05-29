@@ -14,59 +14,101 @@ use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
+    /**
+     * Menampilkan halaman checkout
+     */
     public function index()
     {
+        // Mengambil data keranjang dari database berdasarkan user yang login
         $cartItems = Cart::with('product')
             ->where('user_id', Auth::id())
             ->get();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong!');
+            return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda masih kosong!');
         }
 
-        $totalPrice = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
+        $totalPrice = $cartItems->sum(function ($item) {
+            return $item->product->price * $item->quantity;
+        });
 
         return view('checkout.index', compact('cartItems', 'totalPrice'));
     }
 
+    /**
+     * Memproses transaksi (Checkout ke database)
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'address' => 'required|string|min:10',
+            'shipping_address' => 'required|string|min:10',
+            'payment_method' => 'required|string'
         ]);
 
-        DB::beginTransaction();
-        try {
-            $cartItems = Cart::with('product')->where('user_id', Auth::id())->get();
-            $totalPrice = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
+        $userId = Auth::id();
+        $cartItems = Cart::with('product')->where('user_id', $userId)->get();
 
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong!');
+        }
+
+        // Database Transaction untuk keamanan data
+        DB::beginTransaction();
+
+        try {
+            $totalPrice = $cartItems->sum(function ($item) {
+                return $item->product->price * $item->quantity;
+            });
+
+            // Membuat nomor invoice unik
+            $orderNumber = 'INV-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+
+            // 1. Simpan ke tabel orders
             $order = Order::create([
-                'user_id'          => Auth::id(),
-                'order_number'     => 'INV-' . date('Ymd') . '-' . strtoupper(Str::random(5)),
-                'total_price'      => $totalPrice,
-                'status'           => 'pending',
-                'shipping_address' => $request->address,
-                'name'             => $request->name,
+                'user_id' => $userId,
+                'order_number' => $orderNumber,
+                'total_price' => $totalPrice,
+                'status' => 'pending',
+                'shipping_address' => $request->shipping_address,
             ]);
 
+            // 2. Simpan setiap barang belanjaan ke tabel order_items & kurangi stok
             foreach ($cartItems as $item) {
+                $product = Product::findOrFail($item->product_id);
+
+                if ($product->stock < $item->quantity) {
+                    throw new \Exception("Stok untuk produk '{$product->name}' tidak mencukupi.");
+                }
+
                 OrderItem::create([
-                    'order_id'   => $order->id,
+                    'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'quantity'   => $item->quantity,
-                    'price'      => $item->product->price
+                    'quantity' => $item->quantity,
+                    'price' => $product->price
                 ]);
-                $item->product->decrement('stock', $item->quantity);
+
+                // Kurangi stok produk secara otomatis
+                $product->decrement('stock', $item->quantity);
             }
 
-            Cart::where('user_id', Auth::id())->delete();
+            // 3. Catat data pembayaran awal ke tabel payments
+            Payment::create([
+                'order_id' => $order->id,
+                'payment_method' => $request->payment_method,
+                'payment_status' => 'pending',
+            ]);
+
+            // 4. Kosongkan keranjang belanja di database
+            Cart::where('user_id', $userId)->delete();
+
             DB::commit();
 
-            return redirect()->route('orders.show', $order->id)->with('success', 'Pesanan berhasil dibuat!');
+            return redirect()->route('orders.show', $order->id)
+                ->with('success', 'Pesanan berhasil dibuat! Silakan selesaikan pembayaran Anda.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memproses checkout: ' . $e->getMessage());
+            return redirect()->route('cart.index')->with('error', 'Gagal memproses checkout: ' . $e->getMessage());
         }
     }
 }

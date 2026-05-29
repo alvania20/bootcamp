@@ -66,9 +66,9 @@
         @endforelse
     </div>
 
-    {{-- Pagination --}}
-    <div class="mt-10">
-        {{ $products->links() }}
+    {{-- Pagination (Diatur di tengah agar rapi) --}}
+    <div class="mt-12 flex justify-center">
+        {{ $products->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection
