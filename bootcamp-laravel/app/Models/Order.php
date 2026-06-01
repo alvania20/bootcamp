@@ -24,6 +24,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function products() 
+    {
+    return $this->belongsToMany(Product::class)->withPivot('quantity', 'price');
+    }
+
     // Relasi ke Order Items (Detail Barang)
     public function orderItems()
     {

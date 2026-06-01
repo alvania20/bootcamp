@@ -6,19 +6,29 @@ use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
+    /**
+     * Menampilkan halaman utama (Home)
+     */
     public function home()
     {
-        $title = "Temukan Gadget Impian Anda di GadgetShop";
-        $description = "Pusat katalog terlengkap untuk menjelajahi gadget dan aksesoris teknologi berkualitas tinggi dengan jaminan garansi resmi 100%.";
+        $data = [
+            'title' => "Temukan Gadget Impian Anda di GadgetShop",
+            'description' => "Pusat katalog terlengkap untuk menjelajahi gadget dan aksesoris teknologi berkualitas tinggi dengan jaminan garansi resmi 100%."
+        ];
         
-        return view('pages.home', compact('title', 'description'));
+        return view('pages.home', $data);
     }
 
+    /**
+     * Menampilkan halaman tentang kami (About)
+     */
     public function about()
     {
-        $title = "Tentang GadgetShop";
-        $info = "GadgetShop adalah platform katalog modern yang mempermudah Anda dalam melakukan manajemen inventaris serta menjelajahi dunia teknologi digital secara dinamis.";
+        $data = [
+            'title' => "Tentang GadgetShop",
+            'info' => "GadgetShop adalah platform katalog modern yang mempermudah Anda dalam melakukan manajemen inventaris serta menjelajahi dunia teknologi digital secara dinamis."
+        ];
         
-        return view('pages.about', compact('title', 'info'));
+        return view('pages.about', $data);
     }
 }

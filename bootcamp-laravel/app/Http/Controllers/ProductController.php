@@ -14,12 +14,12 @@ class ProductController extends Controller
     {
         $categories = Category::all();
         $query = Product::query();
-        if ($request->has('category') && !empty($request->category)) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
+
+        if ($request->filled('category')) {
+            $query->whereHas('category', fn($q) => $q->where('slug', $request->category));
         }
-        $products = $query->latest()->paginate(9);
+
+        $products = $query->latest()->paginate(9)->withQueryString();
         return view('products.index', compact('products', 'categories'));
     }
 
@@ -31,20 +31,13 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = Category::all();
-        return view('products.create', compact('categories'));
-    }
-
-    public function edit($id)
-    {
-        $product = Product::findOrFail($id);
-        $categories = Category::all();
-        return view('products.edit', compact('product', 'categories'));
+        // Pastikan model Category sudah di-import
+        return view('products.create', ['categories' => Category::all()]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'price'       => 'required|numeric|min:0',
             'stock'       => 'required|integer|min:0',
@@ -53,52 +46,51 @@ class ProductController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $imageName = time() . '.' . $request->image->extension();
-        
-        if (!File::exists(public_path('img'))) {
-            File::makeDirectory(public_path('img'), 0755, true);
+        if ($request->hasFile('image')) {
+            $imageName = time() . '_' . Str::random(5) . '.' . $request->image->extension();
+            $request->image->move(public_path('img'), $imageName);
+            $validated['image'] = $imageName;
         }
-        
-        $request->image->move(public_path('img'), $imageName);
 
-        Product::create([
-            'name'        => $request->name,
-            'slug'        => Str::slug($request->name),
-            'price'       => $request->price,
-            'stock'       => $request->stock,
-            'category_id' => $request->category_id,
-            'description' => $request->description,
-            'image'       => $imageName,
-        ]);
+        $validated['slug'] = Str::slug($validated['name']);
+        Product::create($validated);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
+    public function edit($id)
+    {
+        return view('products.edit', [
+            'product'    => Product::findOrFail($id),
+            'categories' => Category::all()
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $product = Product::findOrFail($id);
+        
+        $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price'       => 'required|numeric|min:0',
             'stock'       => 'required|integer|min:0',
+            'description' => 'nullable|string', // KOREKSI: Tambahkan field ini
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
         ]);
 
-        $product = Product::findOrFail($id);
-        $data = $request->except(['image']);
-        $data['slug'] = Str::slug($request->name);
-
         if ($request->hasFile('image')) {
+            // Hapus gambar lama jika ada
             if ($product->image && File::exists(public_path('img/' . $product->image))) {
                 File::delete(public_path('img/' . $product->image));
             }
-            
-            $imageName = time() . '.' . $request->image->extension();
+            $imageName = time() . '_' . Str::random(5) . '.' . $request->image->extension();
             $request->image->move(public_path('img'), $imageName);
-            $data['image'] = $imageName;
+            $validated['image'] = $imageName;
         }
 
-        $product->update($data);
+        $validated['slug'] = Str::slug($validated['name']);
+        $product->update($validated);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
     }
@@ -106,11 +98,9 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
-
         if ($product->image && File::exists(public_path('img/' . $product->image))) {
             File::delete(public_path('img/' . $product->image));
         }
-
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
     }

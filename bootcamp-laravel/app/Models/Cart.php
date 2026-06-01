@@ -4,29 +4,42 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Cart extends Model
 {
     use HasFactory;
 
-    // Mengubah tabel menjadi 'carts' agar sesuai dengan struktur database Anda
+    /**
+     * Nama tabel di database.
+     * Secara default Laravel sudah mendeteksi 'carts', 
+     * jadi ini opsional namun bagus untuk kejelasan.
+     */
     protected $table = 'carts';
 
-    protected $fillable = ['user_id', 'product_id', 'quantity'];
+    /**
+     * Atribut yang dapat diisi secara massal (mass assignable).
+     */
+    protected $fillable = [
+        'user_id', 
+        'product_id', 
+        'quantity'
+    ];
 
     /**
-     * Relasi ke User
+     * Relasi ke model User.
+     * Gunakan return type hint untuk kejelasan kode.
      */
-    public function user()
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
-     * Relasi ke Product
+     * Relasi ke model Product.
      */
-    public function product()
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Product::class);
+        return $this->belongsTo(Product::class);
     }
 }

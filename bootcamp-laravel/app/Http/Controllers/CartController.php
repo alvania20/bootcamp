@@ -14,12 +14,11 @@ class CartController extends Controller
      */
     public function index()
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Silakan login untuk melihat keranjang.');
-        }
+        // Gunakan middleware 'auth' di route agar tidak perlu pengecekan manual berulang-ulang
+        $userId = Auth::id();
 
         $cartItems = Cart::with('product')
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->get();
 
         $totalPrice = $cartItems->sum(function ($item) {
@@ -34,40 +33,40 @@ class CartController extends Controller
      */
     public function store(Request $request, $productId)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Silakan login untuk menambah produk ke keranjang.');
-        }
-
+        
         $request->validate([
             'quantity' => 'nullable|integer|min:1'
         ]);
 
         $quantity = $request->quantity ?? 1;
         $product = Product::findOrFail($productId);
+        $userId = Auth::id();
 
+        // Cek stok produk
         if ($product->stock < $quantity) {
             return redirect()->back()->with('error', 'Stok produk tidak mencukupi!');
         }
 
-        $cartItem = Cart::where('user_id', Auth::id())
+        // Cari apakah produk sudah ada di keranjang user
+        $cartItem = Cart::where('user_id', $userId)
             ->where('product_id', $productId)
             ->first();
 
         if ($cartItem) {
             $newQuantity = $cartItem->quantity + $quantity;
             if ($product->stock < $newQuantity) {
-                return redirect()->back()->with('error', 'Jumlah total melebihi stok!');
+                return redirect()->back()->with('error', 'Jumlah total melebihi stok yang tersedia!');
             }
             $cartItem->update(['quantity' => $newQuantity]);
         } else {
             Cart::create([
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'product_id' => $productId,
                 'quantity' => $quantity
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambahkan!');
+        return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambahkan ke keranjang!');
     }
 
     /**
@@ -79,11 +78,10 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Pastikan item milik user yang sedang login
         $cartItem = Cart::where('user_id', Auth::id())->findOrFail($id);
         
-        $product = $cartItem->product;
-        if ($product->stock < $request->quantity) {
+        // Pastikan stok mencukupi untuk update jumlah baru
+        if ($cartItem->product->stock < $request->quantity) {
             return redirect()->back()->with('error', 'Stok tidak mencukupi untuk jumlah tersebut.');
         }
 
@@ -97,7 +95,6 @@ class CartController extends Controller
      */
     public function destroy($id)
     {
-        // Pastikan item milik user yang sedang login
         $cartItem = Cart::where('user_id', Auth::id())->findOrFail($id);
         $cartItem->delete();
 
