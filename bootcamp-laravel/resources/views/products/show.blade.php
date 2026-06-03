@@ -43,8 +43,10 @@
                     </div>
 
                     <div class="mt-8">
-                        <form action="{{ route('cart.store', $product->id) }}" method="POST">
+                        <form action="{{ route('cart.store') }}" method="POST">
                             @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            
                             <div class="flex items-center gap-4">
                                 <div>
                                     <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>

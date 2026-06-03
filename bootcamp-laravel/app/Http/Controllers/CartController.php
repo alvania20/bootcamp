@@ -6,88 +6,76 @@ use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // 1. Tambahkan import ini
 
 class CartController extends Controller
 {
+    use AuthorizesRequests; // 2. Gunakan trait agar method authorize() bisa diakses
+
     /**
-     * Menampilkan isi keranjang pengguna.
+     * Menampilkan daftar item di keranjang.
      */
     public function index()
     {
-        // Gunakan middleware 'auth' di route agar tidak perlu pengecekan manual berulang-ulang
-        $userId = Auth::id();
-
-        $cartItems = Cart::with('product')
-            ->where('user_id', $userId)
-            ->get();
-
-        $totalPrice = $cartItems->sum(function ($item) {
-            return ($item->product->price ?? 0) * $item->quantity;
-        });
-
+        $user = Auth::user();
+        
+        // Admin melihat semua, User hanya melihat milik sendiri
+        if ($user->isAdmin()) {
+            $cartItems = Cart::with(['product', 'user'])->get();
+        } else {
+            $cartItems = Cart::with('product')->where('user_id', $user->id)->get();
+        }
+        
+        $totalPrice = $cartItems->sum(fn($item) => ($item->product->price ?? 0) * $item->quantity);
+        
         return view('cart.index', compact('cartItems', 'totalPrice'));
     }
 
     /**
-     * Menambah produk ke keranjang.
+     * Menyimpan produk ke keranjang.
      */
-    public function store(Request $request, $productId)
+    public function store(Request $request)
     {
-        
         $request->validate([
+            'product_id' => 'required|exists:products,id',
             'quantity' => 'nullable|integer|min:1'
         ]);
 
+        $productId = $request->product_id;
         $quantity = $request->quantity ?? 1;
-        $product = Product::findOrFail($productId);
-        $userId = Auth::id();
 
-        // Cek stok produk
-        if ($product->stock < $quantity) {
-            return redirect()->back()->with('error', 'Stok produk tidak mencukupi!');
-        }
-
-        // Cari apakah produk sudah ada di keranjang user
-        $cartItem = Cart::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->first();
-
+        $cartItem = Cart::where('user_id', Auth::id())
+                        ->where('product_id', $productId)
+                        ->first();
+        
         if ($cartItem) {
-            $newQuantity = $cartItem->quantity + $quantity;
-            if ($product->stock < $newQuantity) {
-                return redirect()->back()->with('error', 'Jumlah total melebihi stok yang tersedia!');
-            }
-            $cartItem->update(['quantity' => $newQuantity]);
+            $cartItem->increment('quantity', $quantity);
         } else {
             Cart::create([
-                'user_id' => $userId,
-                'product_id' => $productId,
+                'user_id' => Auth::id(), 
+                'product_id' => $productId, 
                 'quantity' => $quantity
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambahkan ke keranjang!');
+        return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambah ke keranjang!');
     }
 
     /**
-     * Memperbarui jumlah item di keranjang.
+     * Mengupdate jumlah item di keranjang.
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $cartItem = Cart::where('user_id', Auth::id())->findOrFail($id);
+        $cartItem = Cart::findOrFail($id);
         
-        // Pastikan stok mencukupi untuk update jumlah baru
-        if ($cartItem->product->stock < $request->quantity) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi untuk jumlah tersebut.');
-        }
-
+        // Sekarang authorize() akan berjalan tanpa error
+        $this->authorize('manage', $cartItem);
+        
+        $request->validate(['quantity' => 'required|integer|min:1']);
+        
         $cartItem->update(['quantity' => $request->quantity]);
-
-        return redirect()->route('cart.index')->with('success', 'Jumlah barang berhasil diperbarui.');
+        
+        return redirect()->route('cart.index')->with('success', 'Jumlah produk diperbarui.');
     }
 
     /**
@@ -95,9 +83,13 @@ class CartController extends Controller
      */
     public function destroy($id)
     {
-        $cartItem = Cart::where('user_id', Auth::id())->findOrFail($id);
+        $cartItem = Cart::findOrFail($id);
+        
+        // Sekarang authorize() akan berjalan tanpa error
+        $this->authorize('manage', $cartItem);
+        
         $cartItem->delete();
-
-        return redirect()->route('cart.index')->with('success', 'Barang berhasil dihapus dari keranjang.');
+        
+        return redirect()->route('cart.index')->with('success', 'Produk dihapus dari keranjang.');
     }
 }

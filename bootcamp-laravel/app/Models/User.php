@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -19,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // Pastikan kolom 'role' sudah ada di tabel users (migration)
     ];
 
     /**
@@ -45,15 +47,29 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi ke Cart (Keranjang)
+     * Helper untuk mengecek apakah user adalah admin.
+     * * @return bool
      */
-    public function carts()
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Relasi ke Cart (Keranjang)
+     * * @return HasMany
+     */
+    public function carts(): HasMany
     {
         return $this->hasMany(Cart::class);
     }
 
-    public function orders() 
+    /**
+     * Relasi ke Orders
+     * * @return HasMany
+     */
+    public function orders(): HasMany
     {
-    return $this->hasMany(Order::class);
+        return $this->hasMany(Order::class);
     }
 }

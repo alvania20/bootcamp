@@ -3,44 +3,37 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CartController; // Tambahkan ini
-use App\Http\Controllers\CheckoutController; // Tambahkan ini
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('page.about');
 
-// Produk
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
-Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
-Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+// Produk (Bisa dilihat publik, tapi CRUD mungkin perlu auth)
+Route::resource('products', ProductController::class);
 
-// Protected Routes (User harus Login)
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', function () { return view('dashboard'); })->name('dashboard');
-});
+// Protected Routes (User sudah Login)
 Route::middleware(['auth'])->group(function () {
-    // ... rute lainnya
-    Route::post('/cart/{productId}', [CartController::class, 'store'])->name('cart.store');
+    Route::get('/dashboard', function () { return view('dashboard'); })->name('dashboard');
+
+    // Keranjang
+    Route::resource('cart', CartController::class)->except(['create', 'show', 'edit']);
     
-    // Rute Keranjang (Cart)
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/cart/{productId}', [CartController::class, 'store'])->name('cart.store');
-    Route::put('/cart/{id}', [CartController::class, 'update'])->name('carts.update');
-    Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('carts.destroy');
-    
-    // Rute Checkout
+    // Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
-    // Rute Profil
+    // Kategori - SEBAIKNYA HANYA ADMIN
+    // Jika Anda punya middleware 'admin', gunakan: Route::middleware(['admin'])->resource('categories', CategoryController::class);
+    Route::resource('categories', CategoryController::class);
+
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
 require __DIR__.'/auth.php';

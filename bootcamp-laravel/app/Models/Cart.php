@@ -12,8 +12,7 @@ class Cart extends Model
 
     /**
      * Nama tabel di database.
-     * Secara default Laravel sudah mendeteksi 'carts', 
-     * jadi ini opsional namun bagus untuk kejelasan.
+     * Opsional karena Laravel secara otomatis menebak 'carts'.
      */
     protected $table = 'carts';
 
@@ -27,8 +26,20 @@ class Cart extends Model
     ];
 
     /**
+     * Cast atribut ke tipe data asli untuk keamanan data.
+     * Ini memastikan 'quantity' selalu dianggap integer.
+     */
+    protected function casts(): array
+    {
+        return [
+            'user_id'    => 'integer',
+            'product_id' => 'integer',
+            'quantity'   => 'integer',
+        ];
+    }
+
+    /**
      * Relasi ke model User.
-     * Gunakan return type hint untuk kejelasan kode.
      */
     public function user(): BelongsTo
     {
