@@ -13,16 +13,17 @@ class Category extends Model
 
     /**
      * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
      */
     protected $fillable = ['name', 'slug'];
 
     /**
      * Boot method untuk otomatisasi slug.
-     * Menggunakan event 'saving' mencakup 'creating' dan 'updating'.
      */
     protected static function booted(): void
     {
-        static::saving(function ($category) {
+        static::saving(function (Category $category) {
             // Hanya buat ulang slug jika nama berubah
             if ($category->isDirty('name')) {
                 $category->slug = Str::slug($category->name);
@@ -32,7 +33,8 @@ class Category extends Model
 
     /**
      * Relasi ke Produk.
-     * Menggunakan return type hint untuk standar Laravel modern.
+     *
+     * @return HasMany
      */
     public function products(): HasMany
     {

@@ -1,39 +1,48 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\{
+    CartController,
+    CategoryController,
+    CheckoutController,
+    PageController,
+    ProductController,
+    ProfileController
+};
 use Illuminate\Support\Facades\Route;
 
-// Public Routes
+// --- Public Routes ---
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('page.about');
+Route::get('/katalog', [ProductController::class, 'katalog'])->name('products.katalog');
 
-// Produk (Bisa dilihat publik, tapi CRUD mungkin perlu auth)
-Route::resource('products', ProductController::class);
-
-// Protected Routes (User sudah Login)
+// --- Protected Routes (Perlu Login) ---
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () { return view('dashboard'); })->name('dashboard');
+    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+
+    // Manajemen Produk
+    // Route::resource otomatis membuat route untuk index,
+    // kita cukup pastikan index dipanggil di sini agar urutannya bersih
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::resource('products', ProductController::class)->except(['index']);
 
     // Keranjang
     Route::resource('cart', CartController::class)->except(['create', 'show', 'edit']);
     
     // Checkout
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::prefix('checkout')->controller(CheckoutController::class)->group(function () {
+        Route::get('/', 'index')->name('checkout.index');
+        Route::post('/', 'store')->name('checkout.store');
+    });
 
-    // Kategori - SEBAIKNYA HANYA ADMIN
-    // Jika Anda punya middleware 'admin', gunakan: Route::middleware(['admin'])->resource('categories', CategoryController::class);
+    // Kategori
     Route::resource('categories', CategoryController::class);
 
     // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::prefix('profile')->controller(ProfileController::class)->group(function () {
+        Route::get('/', 'edit')->name('profile.edit');
+        Route::patch('/', 'update')->name('profile.update');
+        Route::delete('/', 'destroy')->name('profile.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

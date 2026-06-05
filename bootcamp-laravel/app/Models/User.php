@@ -48,7 +48,8 @@ class User extends Authenticatable
 
     /**
      * Helper untuk mengecek apakah user adalah admin.
-     * * @return bool
+     *
+     * @return bool
      */
     public function isAdmin(): bool
     {
@@ -57,7 +58,8 @@ class User extends Authenticatable
 
     /**
      * Relasi ke Cart (Keranjang)
-     * * @return HasMany
+     *
+     * @return HasMany
      */
     public function carts(): HasMany
     {
@@ -66,7 +68,8 @@ class User extends Authenticatable
 
     /**
      * Relasi ke Orders
-     * * @return HasMany
+     *
+     * @return HasMany
      */
     public function orders(): HasMany
     {

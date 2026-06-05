@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
-use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // 1. Tambahkan import ini
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CartController extends Controller
 {
-    use AuthorizesRequests; // 2. Gunakan trait agar method authorize() bisa diakses
+    use AuthorizesRequests;
 
     /**
      * Menampilkan daftar item di keranjang.
@@ -20,13 +19,20 @@ class CartController extends Controller
         $user = Auth::user();
         
         // Admin melihat semua, User hanya melihat milik sendiri
-        if ($user->isAdmin()) {
-            $cartItems = Cart::with(['product', 'user'])->get();
+        $query = Cart::with('product');
+        
+        if (!$user->isAdmin()) {
+            $query->where('user_id', $user->id);
         } else {
-            $cartItems = Cart::with('product')->where('user_id', $user->id)->get();
+            $query->with('user'); // Admin butuh data user
         }
         
-        $totalPrice = $cartItems->sum(fn($item) => ($item->product->price ?? 0) * $item->quantity);
+        $cartItems = $query->get();
+        
+        // Perhitungan total harga dengan filter agar tidak error jika produk null
+        $totalPrice = $cartItems->sum(function ($item) {
+            return ($item->product->price ?? 0) * $item->quantity;
+        });
         
         return view('cart.index', compact('cartItems', 'totalPrice'));
     }
@@ -41,22 +47,17 @@ class CartController extends Controller
             'quantity' => 'nullable|integer|min:1'
         ]);
 
-        $productId = $request->product_id;
         $quantity = $request->quantity ?? 1;
 
-        $cartItem = Cart::where('user_id', Auth::id())
-                        ->where('product_id', $productId)
-                        ->first();
-        
-        if ($cartItem) {
-            $cartItem->increment('quantity', $quantity);
-        } else {
-            Cart::create([
-                'user_id' => Auth::id(), 
-                'product_id' => $productId, 
-                'quantity' => $quantity
-            ]);
-        }
+        $cartItem = Cart::updateOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'product_id' => $request->product_id
+            ],
+            [
+                'quantity' => \Illuminate\Support\Facades\DB::raw("quantity + $quantity")
+            ]
+        );
 
         return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambah ke keranjang!');
     }
@@ -68,7 +69,6 @@ class CartController extends Controller
     {
         $cartItem = Cart::findOrFail($id);
         
-        // Sekarang authorize() akan berjalan tanpa error
         $this->authorize('manage', $cartItem);
         
         $request->validate(['quantity' => 'required|integer|min:1']);
@@ -85,7 +85,6 @@ class CartController extends Controller
     {
         $cartItem = Cart::findOrFail($id);
         
-        // Sekarang authorize() akan berjalan tanpa error
         $this->authorize('manage', $cartItem);
         
         $cartItem->delete();

@@ -7,101 +7,128 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    public function index()
+    {
+        return view('products.index', [
+            'products' => Product::with('category')->latest()->get()
+        ]);
+    }
+
+    public function katalog(Request $request)
     {
         $categories = Category::all();
         $query = Product::query();
 
+        // 1. Fitur Pencarian
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // 2. Filter Kategori
         if ($request->filled('category')) {
             $query->whereHas('category', fn($q) => $q->where('slug', $request->category));
         }
 
-        $products = $query->latest()->paginate(9)->withQueryString();
-        return view('products.index', compact('products', 'categories'));
+        // 3. Sorting
+        match ($request->sort) {
+            'harga_tertinggi' => $query->orderBy('price', 'desc'),
+            'harga_terendah'  => $query->orderBy('price', 'asc'),
+            default           => $query->latest(),
+        };
+
+        return view('products.katalog', [
+            'products'   => $query->paginate(9)->withQueryString(),
+            'categories' => $categories
+        ]);
     }
 
-    public function show($id)
+    public function show(Product $product)
     {
-        $product = Product::findOrFail($id);
         return view('products.show', compact('product'));
     }
 
     public function create()
     {
-        // Pastikan model Category sudah di-import
         return view('products.create', ['categories' => Category::all()]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'category_id' => 'required|exists:categories,id',
-            'image'       => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $this->validateProduct($request);
 
         if ($request->hasFile('image')) {
-            $imageName = time() . '_' . Str::random(5) . '.' . $request->image->extension();
-            $request->image->move(public_path('img'), $imageName);
-            $validated['image'] = $imageName;
+            $validated['image'] = $this->uploadImage($request->file('image'));
         }
 
-        $validated['slug'] = Str::slug($validated['name']);
         Product::create($validated);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    public function edit($id)
+    public function edit(Product $product)
     {
         return view('products.edit', [
-            'product'    => Product::findOrFail($id),
+            'product' => $product,
             'categories' => Category::all()
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Product $product)
     {
-        $product = Product::findOrFail($id);
-        
-        $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'description' => 'nullable|string', // KOREKSI: Tambahkan field ini
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
-        ]);
+        $validated = $this->validateProduct($request, $product->id);
 
-        if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($product->image && File::exists(public_path('img/' . $product->image))) {
-                File::delete(public_path('img/' . $product->image));
+        DB::transaction(function () use ($request, $product, &$validated) {
+            if ($request->hasFile('image')) {
+                $this->deleteImage($product->image);
+                $validated['image'] = $this->uploadImage($request->file('image'));
             }
-            $imageName = time() . '_' . Str::random(5) . '.' . $request->image->extension();
-            $request->image->move(public_path('img'), $imageName);
-            $validated['image'] = $imageName;
-        }
 
-        $validated['slug'] = Str::slug($validated['name']);
-        $product->update($validated);
+            $product->update($validated);
+        });
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Product $product)
     {
-        $product = Product::findOrFail($id);
-        if ($product->image && File::exists(public_path('img/' . $product->image))) {
-            File::delete(public_path('img/' . $product->image));
-        }
-        $product->delete();
+        DB::transaction(function () use ($product) {
+            $this->deleteImage($product->image);
+            $product->delete();
+        });
+
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+    }
+
+    // --- Private Helper Methods ---
+
+    private function validateProduct(Request $request, ?int $id = null): array
+    {
+        return $request->validate([
+            'name'        => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'image'       => ($id ? 'nullable' : 'required') . '|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+    }
+
+    private function uploadImage($file): string
+    {
+        $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $imageName = time() . '_' . $name . '_' . Str::random(5) . '.' . $file->extension();
+        $file->move(public_path('img'), $imageName);
+        return $imageName;
+    }
+
+    private function deleteImage(?string $imageName): void
+    {
+        if ($imageName && File::exists(public_path('img/' . $imageName))) {
+            File::delete(public_path('img/' . $imageName));
+        }
     }
 }

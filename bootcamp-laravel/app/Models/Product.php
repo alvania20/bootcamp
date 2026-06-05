@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'products';
-
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
         'name', 
         'slug', 
@@ -23,37 +26,40 @@ class Product extends Model
         'image'
     ];
 
+    /**
+     * The attributes that should be cast.
+     */
     protected $casts = [
-        'price' => 'integer',
-        'stock' => 'integer',
+        'price'       => 'integer',
+        'stock'       => 'integer',
         'category_id' => 'integer',
     ];
 
-    protected static function boot()
+    /**
+     * Booted method untuk otomatisasi slug.
+     */
+    protected static function booted(): void
     {
-        parent::boot();
-
-        static::creating(function ($product) {
-            if (empty($product->slug)) {
-                $product->slug = Str::slug($product->name);
-            }
-        });
-
-        static::updating(function ($product) {
-            if ($product->isDirty('name')) {
+        static::saving(function (Product $product) {
+            // Buat slug jika kosong atau jika nama produk diubah
+            if (empty($product->slug) || $product->isDirty('name')) {
                 $product->slug = Str::slug($product->name);
             }
         });
     }
 
-    // Relasi ke Category
-    public function category()
+    /**
+     * Relasi ke Category
+     */
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    // Relasi ke Order
-    public function orders()
+    /**
+     * Relasi ke Order
+     */
+    public function orders(): BelongsToMany
     {
         return $this->belongsToMany(Order::class)->withPivot('quantity', 'price');
     }

@@ -13,8 +13,9 @@
         @if($cartItems->isEmpty())
             <div class="text-center py-20 bg-white rounded-2xl border shadow-sm">
                 <p class="text-slate-500 text-lg">Keranjang saat ini kosong.</p>
-                <a href="{{ route('products.index') }}" class="mt-4 inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700">
-                    Belanja Sekarang
+                <a href="{{ route('products.katalog') }}" 
+                   class="mt-4 inline-flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition">
+                    Lihat Katalog Produk
                 </a>
             </div>
         @else
@@ -35,14 +36,12 @@
                         </div>
 
                         <div class="flex items-center gap-4">
-                            {{-- PERBAIKAN: Gunakan 'cart.update' bukan 'carts.update' --}}
                             <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-2">
                                 @csrf @method('PUT')
                                 <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="w-16 border rounded p-1 text-center">
                                 <button type="submit" class="text-xs text-slate-500 underline hover:text-indigo-600">Update</button>
                             </form>
                             
-                            {{-- PERBAIKAN: Gunakan 'cart.destroy' bukan 'carts.destroy' --}}
                             <form action="{{ route('cart.destroy', $item->id) }}" method="POST">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="text-red-500 font-bold text-sm hover:text-red-700" onclick="return confirm('Yakin ingin menghapus?')">Hapus</button>
@@ -58,7 +57,7 @@
                     <h3 class="text-lg font-bold mb-4">Ringkasan Belanja</h3>
                     <div class="flex justify-between mb-2">
                         <span class="text-slate-600">Total Harga</span>
-                        <span class="font-bold text-lg">Rp {{ number_format($totalPrice, 0, ',', '.') }}</span>
+                        <span class="font-bold text-lg">Rp {{ number_format($totalPrice ?? 0, 0, ',', '.') }}</span>
                     </div>
                     <hr class="my-4">
                     <a href="{{ route('checkout.index') }}" class="block w-full bg-indigo-600 text-white text-center py-3 rounded-xl font-bold hover:bg-indigo-700 transition">

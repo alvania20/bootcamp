@@ -8,10 +8,7 @@ use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
-    /**
-     * Menampilkan daftar kategori.
-     * View diarahkan ke 'admin.categories.index' sesuai lokasi file Anda.
-     */
+    // Mengarahkan ke resources/views/admin/categories/index.blade.php
     public function index() {
         $categories = Category::withCount('products')->get();
         return view('admin.categories.index', compact('categories')); 
@@ -28,13 +25,23 @@ class CategoryController extends Controller
         return back()->with('success', 'Kategori berhasil ditambah!');
     }
 
-    /**
-     * Menampilkan form edit.
-     * Pastikan file view ini juga berada di resources/views/admin/categories/edit.blade.php
-     */
+    // Mengarahkan ke resources/views/admin/categories/edit.blade.php
     public function edit($id) {
         $category = Category::findOrFail($id);
         return view('admin.categories.edit', compact('category'));
+    }
+
+    public function update(Request $request, $id) {
+        $category = Category::findOrFail($id);
+        
+        $request->validate(['name' => 'required|unique:categories,name,' . $id]);
+        
+        $category->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name)
+        ]);
+        
+        return redirect()->route('categories.index')->with('success', 'Kategori berhasil diperbarui!');
     }
 
     public function destroy(Category $category) {
