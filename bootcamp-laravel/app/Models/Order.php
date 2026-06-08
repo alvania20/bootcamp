@@ -4,11 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
 {
     use HasFactory;
 
+    /**
+     * Atribut yang dapat diisi secara massal.
+     */
     protected $fillable = [
         'user_id',
         'order_number',
@@ -18,28 +25,56 @@ class Order extends Model
         'tracking_number'
     ];
 
-    // Relasi ke User
-    public function user()
+    /**
+     * Cast atribut ke tipe data asli.
+     */
+    protected function casts(): array
+    {
+        return [
+            'total_price' => 'integer',
+        ];
+    }
+
+    /**
+     * Relasi ke User (Pembeli).
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function products() 
+    /**
+     * Relasi Many-to-Many ke Produk.
+     */
+    public function products(): BelongsToMany 
     {
-    return $this->belongsToMany(Product::class)->withPivot('quantity', 'price');
+        return $this->belongsToMany(Product::class)
+                    ->withPivot('quantity', 'price')
+                    ->withTimestamps();
     }
 
-    // Relasi ke Order Items (Detail Barang)
-    public function orderItems()
+    /**
+     * Relasi ke Order Items (Detail Barang).
+     */
+    public function orderItems(): HasMany
     {
-        // Menggunakan path lengkap class string untuk menghindari error Intelephense
-        return $this->hasMany(\App\Models\OrderItem::class);
+        return $this->hasMany(OrderItem::class);
     }
 
-    // Relasi ke Pembayaran (One-to-One)
-    public function payment()
+    /**
+     * Relasi ke Order Histories (Riwayat Perubahan Status).
+     * DITAMBAHKAN UNTUK MEMPERBAIKI ERROR
+     */
+    public function histories(): HasMany
     {
-        // Menggunakan path lengkap class string untuk menghindari error Intelephense
-        return $this->hasOne(\App\Models\Payment::class);
+        return $this->hasMany(OrderHistory::class, 'order_id', 'id');
+    }
+
+    /**
+     * Relasi ke Pembayaran (One-to-One).
+     */
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class);
     }
 }

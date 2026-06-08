@@ -10,12 +10,15 @@ use Illuminate\Support\Facades\Auth;
 class OrderController extends Controller
 {
     /**
-     * Menampilkan detail pesanan beserta riwayatnya.
+     * Menampilkan detail pesanan beserta item yang dibeli, data pembeli, dan riwayatnya.
      */
     public function show($id)
     {
-        // Pastikan Model Order memiliki relasi 'histories' agar tidak error
-        $order = Order::with(['histories.user'])->findOrFail($id);
+        // Menggunakan Eager Loading untuk efisiensi query
+        // Memuat data user, item pesanan (beserta produknya), dan histori
+        $order = Order::with(['user', 'orderItems.product', 'histories.user'])
+                      ->findOrFail($id);
+                      
         return view('orders.show', compact('order'));
     }
 
@@ -27,20 +30,21 @@ class OrderController extends Controller
         // Validasi input status
         $request->validate([
             'status' => 'required|in:pending,paid,shipped,completed,cancelled',
+            'notes'  => 'nullable|string|max:255',
         ]);
 
         $order = Order::findOrFail($id);
         $oldStatus = $order->status;
 
-        // 1. Update status pesanan di tabel orders
+        // Update status pesanan
         $order->update(['status' => $request->status]);
 
-        // 2. Simpan ke tabel order_histories untuk jejak audit
+        // Simpan ke tabel order_histories untuk jejak audit
         OrderHistory::create([
             'order_id' => $order->id,
-            'user_id'  => Auth::id(), // Mencatat admin/user yang melakukan update
+            'user_id'  => Auth::id(), 
             'status'   => $request->status,
-            'notes'    => $request->notes ?? 'Status diubah dari ' . $oldStatus . ' ke ' . $request->status
+            'notes'    => $request->notes ?? "Status diubah dari '{$oldStatus}' ke '{$request->status}'"
         ]);
 
         return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui.');

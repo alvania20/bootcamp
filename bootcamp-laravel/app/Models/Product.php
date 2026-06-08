@@ -14,7 +14,7 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal.
      */
     protected $fillable = [
         'name', 
@@ -23,17 +23,22 @@ class Product extends Model
         'stock', 
         'category_id', 
         'description', 
-        'image'
+        'image',
+        'views' // Menambahkan views agar bisa diupdate melalui sistem
     ];
 
     /**
-     * The attributes that should be cast.
+     * Casting atribut ke tipe data asli.
      */
-    protected $casts = [
-        'price'       => 'integer',
-        'stock'       => 'integer',
-        'category_id' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'price'       => 'integer',
+            'stock'       => 'integer',
+            'category_id' => 'integer',
+            'views'       => 'integer', // Pastikan views bertipe integer
+        ];
+    }
 
     /**
      * Booted method untuk otomatisasi slug.
@@ -57,10 +62,12 @@ class Product extends Model
     }
 
     /**
-     * Relasi ke Order
+     * Relasi ke Order (Many-to-Many)
      */
     public function orders(): BelongsToMany
     {
-        return $this->belongsToMany(Order::class)->withPivot('quantity', 'price');
+        return $this->belongsToMany(Order::class)
+                    ->withPivot('quantity', 'price')
+                    ->withTimestamps();
     }
 }

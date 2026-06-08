@@ -4,6 +4,8 @@ use App\Http\Controllers\{
     CartController,
     CategoryController,
     CheckoutController,
+    DashboardController,
+    OrderController, // Pastikan OrderController sudah dibuat
     PageController,
     ProductController,
     ProfileController
@@ -17,11 +19,10 @@ Route::get('/katalog', [ProductController::class, 'katalog'])->name('products.ka
 
 // --- Protected Routes (Perlu Login) ---
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Manajemen Produk
-    // Route::resource otomatis membuat route untuk index,
-    // kita cukup pastikan index dipanggil di sini agar urutannya bersih
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::resource('products', ProductController::class)->except(['index']);
 
@@ -33,6 +34,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index')->name('checkout.index');
         Route::post('/', 'store')->name('checkout.store');
     });
+
+    // --- Order / Transaksi (Baru) ---
+    // Route untuk melihat daftar transaksi dan detail spesifik per transaksi
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 
     // Kategori
     Route::resource('categories', CategoryController::class);
