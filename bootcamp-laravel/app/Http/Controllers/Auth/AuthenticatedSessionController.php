@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Tampilkan halaman login.
      */
     public function create(): View
     {
@@ -20,28 +20,31 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Proses autentikasi user.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // 1. Validasi kredensial (LoginRequest menangani ini)
         $request->authenticate();
 
+        // 2. Regenerasi session untuk mencegah session fixation attack
         $request->session()->regenerate();
 
+        // 3. Redirect ke dashboard atau ke URL yang sebelumnya ingin diakses user
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
-     * Destroy an authenticated session.
+     * Hapus sesi user (Logout).
      */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
+        // Redirect ke halaman utama setelah logout
         return redirect('/');
     }
 }

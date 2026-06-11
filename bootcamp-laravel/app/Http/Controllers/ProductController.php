@@ -8,55 +8,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class ProductController extends Controller
 {
-    public function index()
+    // --- ADMIN METHODS ---
+    public function index(): View
     {
-        return view('products.index', [
+        // Pastikan file berada di: resources/views/admin/products/index.blade.php
+        return view('admin.products.index', [
             'products' => Product::with('category')->latest()->get()
         ]);
     }
 
-    public function katalog(Request $request)
+    public function create(): View
     {
-        $categories = Category::all();
-        $query = Product::query();
-
-        // 1. Fitur Pencarian
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        // 2. Filter Kategori
-        if ($request->filled('category')) {
-            $query->whereHas('category', fn($q) => $q->where('slug', $request->category));
-        }
-
-        // 3. Sorting
-        match ($request->sort) {
-            'harga_tertinggi' => $query->orderBy('price', 'desc'),
-            'harga_terendah'  => $query->orderBy('price', 'asc'),
-            default           => $query->latest(),
-        };
-
-        return view('products.katalog', [
-            'products'   => $query->paginate(9)->withQueryString(),
-            'categories' => $categories
-        ]);
+        return view('admin.products.create', ['categories' => Category::all()]);
     }
 
-    public function show(Product $product)
-    {
-        return view('products.show', compact('product'));
-    }
-
-    public function create()
-    {
-        return view('products.create', ['categories' => Category::all()]);
-    }
-
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateProduct($request);
 
@@ -65,46 +36,74 @@ class ProductController extends Controller
         }
 
         Product::create($validated);
-
-        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    public function edit(Product $product)
+    public function edit(Product $product): View
     {
-        return view('products.edit', [
+        return view('admin.products.edit', [
             'product' => $product,
             'categories' => Category::all()
         ]);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(Request $request, Product $product): RedirectResponse
     {
         $validated = $this->validateProduct($request, $product->id);
 
-        DB::transaction(function () use ($request, $product, &$validated) {
+        DB::transaction(function () use ($request, $product, $validated) {
             if ($request->hasFile('image')) {
                 $this->deleteImage($product->image);
                 $validated['image'] = $this->uploadImage($request->file('image'));
             }
-
             $product->update($validated);
         });
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
-    public function destroy(Product $product)
+    public function destroy(Product $product): RedirectResponse
     {
         DB::transaction(function () use ($product) {
             $this->deleteImage($product->image);
             $product->delete();
         });
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus!');
     }
 
-    // --- Private Helper Methods ---
+    // --- PUBLIC METHODS ---
+    public function katalog(Request $request): View
+    {
+        $query = Product::query();
 
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('category')) {
+            $query->whereHas('category', fn($q) => $q->where('slug', $request->category));
+        }
+
+        match ($request->sort) {
+            'harga_tertinggi' => $query->orderBy('price', 'desc'),
+            'harga_terendah'  => $query->orderBy('price', 'asc'),
+            default           => $query->latest(),
+        };
+
+        return view('products.katalog', [
+            'products'   => $query->paginate(9)->withQueryString(),
+            'categories' => Category::all()
+        ]);
+    }
+
+    public function show(Product $product): View
+    {
+        $product->increment('views');
+        return view('products.show', compact('product'));
+    }
+
+    // --- HELPER METHODS ---
     private function validateProduct(Request $request, ?int $id = null): array
     {
         return $request->validate([
@@ -120,7 +119,8 @@ class ProductController extends Controller
     private function uploadImage($file): string
     {
         $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-        $imageName = time() . '_' . $name . '_' . Str::random(5) . '.' . $file->extension();
+        $imageName = time() . '_' . $name . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+        
         $file->move(public_path('img'), $imageName);
         return $imageName;
     }

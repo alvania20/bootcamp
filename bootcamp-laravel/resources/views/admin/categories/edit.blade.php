@@ -10,7 +10,8 @@
             <div class="bg-white p-8 rounded-lg shadow">
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">Edit Kategori</h2>
 
-                <form action="{{ route('categories.update', $category->id) }}" method="POST">
+                {{-- KOREKSI: Tambahkan prefix admin. pada semua route --}}
+                <form action="{{ route('admin.categories.update', $category->id) }}" method="POST">
                     @csrf
                     @method('PUT')
 
@@ -26,10 +27,11 @@
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
                             Update Kategori
                         </button>
-                        <a href="{{ route('categories.index') }}" class="text-gray-600 hover:text-gray-900">
+                        {{-- KOREKSI: Tambahkan prefix admin. pada route index --}}
+                        <a href="{{ route('admin.categories.index') }}" class="text-gray-600 hover:text-gray-900 transition duration-200">
                             Batal
                         </a>
                     </div>

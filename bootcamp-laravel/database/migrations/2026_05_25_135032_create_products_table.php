@@ -11,20 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Menghapus tabel products terlebih dahulu jika sebelumnya sudah ada di database Anda
-        Schema::dropIfExists('products');
-
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            // Menghubungkan ke tabel categories (pastikan tabel categories sudah dimigrasi lebih dulu)
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
+            
+            // KOREKSI: Harus diarahkan ke tabel 'categories' sesuai file migration sebelumnya
+            $table->foreignId('category_id')
+                  ->constrained('categories')
+                  ->onDelete('cascade');
+            
             $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('slug')->unique()->index();
             $table->text('description')->nullable();
-            $table->decimal('price', 12, 2); // Menggunakan decimal untuk nominal uang yang presisi
+            $table->decimal('price', 12, 2); 
             $table->integer('stock')->default(0);
-            $table->string('image')->nullable(); // Path penyimpanan gambar produk
-            $table->softDeletes(); // Menjaga integritas data jika produk dihapus dari katalog admin
+            $table->string('image')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

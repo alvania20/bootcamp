@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Cart;
+use App\Models\Order;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -13,20 +15,16 @@ class User extends Authenticatable
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role', // Pastikan kolom 'role' sudah ada di tabel users (migration)
+        'role',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -35,8 +33,6 @@ class User extends Authenticatable
 
     /**
      * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
      */
     protected function casts(): array
     {
@@ -48,8 +44,7 @@ class User extends Authenticatable
 
     /**
      * Helper untuk mengecek apakah user adalah admin.
-     *
-     * @return bool
+     * Menggunakan null-safe operator dan memastikan konsistensi data.
      */
     public function isAdmin(): bool
     {
@@ -57,9 +52,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi ke Cart (Keranjang)
-     *
-     * @return HasMany
+     * Relasi ke Cart (Keranjang).
      */
     public function carts(): HasMany
     {
@@ -67,9 +60,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi ke Orders
-     *
-     * @return HasMany
+     * Relasi ke Orders (Transaksi).
      */
     public function orders(): HasMany
     {

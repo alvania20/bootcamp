@@ -11,19 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_histories', function (Blueprint $table) {
-            $table->id();
-            // Menghubungkan log ke pesanan tertentu
-            $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            
-            // Mencatat perubahan status
-            $table->string('status'); 
-            
-            // Catatan tambahan jika admin mengubah status secara manual
-            $table->text('notes')->nullable(); 
-            
-            $table->timestamps();
-        });
+        // Pastikan tabel tidak ada sebelumnya untuk menghindari error saat migrasi ulang
+        if (!Schema::hasTable('order_histories')) {
+            Schema::create('order_histories', function (Blueprint $table) {
+                $table->id();
+                
+                // Menghubungkan log ke pesanan tertentu
+                $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                
+                // Menghubungkan log ke user (admin/staf) yang mengubah status
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                
+                $table->string('status'); 
+                $table->text('notes')->nullable(); 
+                $table->timestamps();
+            });
+        }
     }
 
     /**

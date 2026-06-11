@@ -12,19 +12,19 @@ class Category extends Model
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal (mass-assignable).
      *
      * @var array<int, string>
      */
     protected $fillable = ['name', 'slug'];
 
     /**
-     * Boot method untuk otomatisasi slug.
+     * "Booting" model untuk logika otomatisasi.
      */
     protected static function booted(): void
     {
+        // Otomatisasi pembuatan slug sebelum data disimpan/diupdate
         static::saving(function (Category $category) {
-            // Hanya buat ulang slug jika nama berubah
             if ($category->isDirty('name')) {
                 $category->slug = Str::slug($category->name);
             }
@@ -32,9 +32,7 @@ class Category extends Model
     }
 
     /**
-     * Relasi ke Produk.
-     *
-     * @return HasMany
+     * Mendapatkan semua produk yang terkait dengan kategori ini.
      */
     public function products(): HasMany
     {

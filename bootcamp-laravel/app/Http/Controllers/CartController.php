@@ -3,92 +3,89 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class CartController extends Controller
 {
-    use AuthorizesRequests;
-
-    /**
-     * Menampilkan daftar item di keranjang.
-     */
-    public function index()
+    public function index(): View
     {
         $user = Auth::user();
         
-        // Admin melihat semua, User hanya melihat milik sendiri
+        // Eager loading produk untuk efisiensi query
         $query = Cart::with('product');
         
         if (!$user->isAdmin()) {
             $query->where('user_id', $user->id);
-        } else {
-            $query->with('user'); // Admin butuh data user
         }
         
         $cartItems = $query->get();
         
-        // Perhitungan total harga dengan filter agar tidak error jika produk null
-        $totalPrice = $cartItems->sum(function ($item) {
-            return ($item->product->price ?? 0) * $item->quantity;
-        });
+        $totalPrice = $cartItems->sum(fn($item) => ($item->product->price ?? 0) * $item->quantity);
         
         return view('cart.index', compact('cartItems', 'totalPrice'));
     }
 
-    /**
-     * Menyimpan produk ke keranjang.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'nullable|integer|min:1'
+            'quantity'   => 'required|integer|min:1'
         ]);
 
-        $quantity = $request->quantity ?? 1;
+        $productId = $validated['product_id'];
+        $addedQuantity = (int)$validated['quantity'];
 
-        $cartItem = Cart::updateOrCreate(
-            [
-                'user_id' => Auth::id(),
-                'product_id' => $request->product_id
-            ],
-            [
-                'quantity' => \Illuminate\Support\Facades\DB::raw("quantity + $quantity")
-            ]
-        );
+        // Menggunakan logika transaksi untuk keamanan data
+        \Illuminate\Support\Facades\DB::transaction(function () use ($productId, $addedQuantity) {
+            $cart = Cart::where('user_id', Auth::id())
+                        ->where('product_id', $productId)
+                        ->first();
 
-        return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambah ke keranjang!');
+            if ($cart) {
+                $cart->increment('quantity', $addedQuantity);
+            } else {
+                Cart::create([
+                    'user_id'    => Auth::id(),
+                    'product_id' => $productId,
+                    'quantity'   => $addedQuantity
+                ]);
+            }
+        });
+
+        return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
-    /**
-     * Mengupdate jumlah item di keranjang.
-     */
-    public function update(Request $request, $id)
+    public function update(Request $request, Cart $cart): RedirectResponse
     {
-        $cartItem = Cart::findOrFail($id);
+        $this->authorizeAccess($cart);
         
-        $this->authorize('manage', $cartItem);
+        $validated = $request->validate(['quantity' => 'required|integer|min:1']);
         
-        $request->validate(['quantity' => 'required|integer|min:1']);
+        $cart->update(['quantity' => $validated['quantity']]);
         
-        $cartItem->update(['quantity' => $request->quantity]);
-        
-        return redirect()->route('cart.index')->with('success', 'Jumlah produk diperbarui.');
+        return redirect()->route('cart.index')->with('success', 'Kuantitas diperbarui.');
     }
 
-    /**
-     * Menghapus item dari keranjang.
-     */
-    public function destroy($id)
+    public function destroy(Cart $cart): RedirectResponse
     {
-        $cartItem = Cart::findOrFail($id);
+        $this->authorizeAccess($cart);
         
-        $this->authorize('manage', $cartItem);
+        $cart->delete();
         
-        $cartItem->delete();
+        return redirect()->route('cart.index')->with('success', 'Produk dihapus.');
+    }
+
+    private function authorizeAccess(Cart $cart): void
+    {
+        $user = Auth::user();
         
-        return redirect()->route('cart.index')->with('success', 'Produk dihapus dari keranjang.');
+        // Menggunakan Policy (atau logika if sederhana)
+        if (!$user->isAdmin() && (int)$cart->user_id !== (int)$user->id) {
+            abort(403, 'Anda tidak memiliki hak akses untuk tindakan ini.');
+        }
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -24,7 +25,7 @@ class Product extends Model
         'category_id', 
         'description', 
         'image',
-        'views' // Menambahkan views agar bisa diupdate melalui sistem
+        'views'
     ];
 
     /**
@@ -36,7 +37,7 @@ class Product extends Model
             'price'       => 'integer',
             'stock'       => 'integer',
             'category_id' => 'integer',
-            'views'       => 'integer', // Pastikan views bertipe integer
+            'views'       => 'integer',
         ];
     }
 
@@ -46,11 +47,22 @@ class Product extends Model
     protected static function booted(): void
     {
         static::saving(function (Product $product) {
-            // Buat slug jika kosong atau jika nama produk diubah
-            if (empty($product->slug) || $product->isDirty('name')) {
+            // Menggunakan isDirty untuk memeriksa perubahan pada nama
+            if ($product->isDirty('name')) {
                 $product->slug = Str::slug($product->name);
             }
         });
+    }
+
+    /**
+     * Accessor untuk memformat harga (contoh: Rp 1.000.000)
+     * Dapat dipanggil dengan $product->formatted_price
+     */
+    protected function formattedPrice(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => 'Rp ' . number_format($this->price, 0, ',', '.')
+        );
     }
 
     /**

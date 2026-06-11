@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Auth; // Jangan lupa import ini
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -12,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Tempat untuk mendaftarkan binding service ke container.
+        // Jangan taruh logika Auth di sini.
     }
 
     /**
@@ -20,9 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Pindahkan logika login dummy ke dalam sini
-        if (!Auth::check()) {
-            Auth::loginUsingId(1);
-        }
+        // Baris kode yang memaksa login otomatis (Auth::loginUsingId(1)) 
+        // TELAH DIHAPUS agar sistem autentikasi Laravel berjalan normal.
     }
 }

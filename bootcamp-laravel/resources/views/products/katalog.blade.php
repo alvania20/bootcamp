@@ -15,7 +15,7 @@
                 <div class="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     <a href="{{ route('products.katalog', ['sort' => request('sort'), 'search' => request('search')]) }}" 
                        class="whitespace-nowrap px-4 py-2 text-sm font-bold rounded-full transition {{ !request('category') ? 'bg-indigo-600 text-white' : 'bg-white border text-slate-600 hover:bg-slate-50' }}">
-                        Semua
+                       Semua
                     </a>
                     @foreach($categories as $category)
                         <a href="{{ route('products.katalog', ['category' => $category->slug, 'sort' => request('sort'), 'search' => request('search')]) }}" 
@@ -27,7 +27,6 @@
 
                 {{-- Form Pencarian & Sorting --}}
                 <form action="{{ route('products.katalog') }}" method="GET" class="flex items-center gap-2 shrink-0">
-                    {{-- Hidden inputs agar filter tidak hilang saat search/sort berubah --}}
                     @if(request('category'))
                         <input type="hidden" name="category" value="{{ request('category') }}">
                     @endif
@@ -57,14 +56,18 @@
                     </div>
                     <div class="p-6 flex flex-col flex-grow">
                         <span class="text-[10px] uppercase tracking-widest font-bold text-indigo-500">
-                            {{ $product->category->name ?? 'Tanpa Kategori' }}
+                            {{ $product->category?->name ?? 'Tanpa Kategori' }}
                         </span>
                         <h3 class="font-bold text-lg text-slate-900 truncate mt-1">{{ $product->name }}</h3>
                         <p class="text-sm text-slate-500 mt-2 flex-grow">{{ Str::limit($product->description, 50) }}</p>
                         
                         <div class="mt-6 flex items-center justify-between">
-                            <span class="font-black text-slate-900">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
-                            <a href="{{ route('products.show', $product->id) }}" class="text-indigo-600 font-bold text-sm hover:underline">Detail</a>
+                            <span class="font-black text-slate-900">{{ $product->formatted_price }}</span>
+                            
+                            {{-- KOREKSI: Menggunakan rute publik 'products.show' agar bisa diakses User biasa --}}
+                            <a href="{{ route('products.show', $product->id) }}" class="text-indigo-600 font-bold text-sm hover:underline">
+                                Detail
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -77,7 +80,7 @@
 
         {{-- Pagination --}}
         <div class="mt-12">
-            {{ $products->links() }}
+            {{ $products->appends(request()->query())->links() }}
         </div>
     </div>
 </x-app-layout>

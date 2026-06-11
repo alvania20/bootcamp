@@ -11,9 +11,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Panggil seeder dalam urutan yang benar
         $this->call([
-            CategorySeeder::class, // Harus dipanggil duluan agar ID kategori tersedia
-            ProductSeeder::class,  // Baru kemudian produk
+            UserSeeder::class,     // 1. Buat User dulu
+            CategorySeeder::class, // 2. Buat Kategori
+            ProductSeeder::class,  // 3. Buat Produk
         ]);
     }
 }

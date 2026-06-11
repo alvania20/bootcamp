@@ -1,54 +1,65 @@
 <?php
 
 use App\Http\Controllers\{
-    CartController,
-    CategoryController,
-    CheckoutController,
-    DashboardController,
-    OrderController, // Pastikan OrderController sudah dibuat
-    PageController,
-    ProductController,
-    ProfileController
+    CartController, CategoryController, CheckoutController,
+    DashboardController, OrderController, PageController,
+    ProductController, ProfileController
 };
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\{Route, Auth, Artisan};
+use App\Models\User;
 
-// --- Public Routes ---
+// --- 1. Public Routes ---
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('page.about');
 Route::get('/katalog', [ProductController::class, 'katalog'])->name('products.katalog');
+Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
-// --- Protected Routes (Perlu Login) ---
-Route::middleware(['auth'])->group(function () {
-    // Dashboard
+// --- 2. Authenticated Routes (User & Admin) ---
+Route::middleware(['auth', 'verified'])->group(function () {
+    
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Manajemen Produk
-    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-    Route::resource('products', ProductController::class)->except(['index']);
-
-    // Keranjang
+    
     Route::resource('cart', CartController::class)->except(['create', 'show', 'edit']);
     
-    // Checkout
-    Route::prefix('checkout')->controller(CheckoutController::class)->group(function () {
-        Route::get('/', 'index')->name('checkout.index');
-        Route::post('/', 'store')->name('checkout.store');
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/', [CheckoutController::class, 'index'])->name('index');
+        Route::post('/', [CheckoutController::class, 'store'])->name('store');
     });
 
-    // --- Order / Transaksi (Baru) ---
-    // Route untuk melihat daftar transaksi dan detail spesifik per transaksi
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    // Orders (User & Admin View)
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+    });
 
-    // Kategori
-    Route::resource('categories', CategoryController::class);
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+        Route::patch('/', [ProfileController::class, 'update'])->name('update');
+        Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+    });
 
-    // Profile
-    Route::prefix('profile')->controller(ProfileController::class)->group(function () {
-        Route::get('/', 'edit')->name('profile.edit');
-        Route::patch('/', 'update')->name('profile.update');
-        Route::delete('/', 'destroy')->name('profile.destroy');
+    // --- 3. Admin Routes (Dilindungi Middleware Admin) ---
+    Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::resource('products', ProductController::class);
+        Route::resource('categories', CategoryController::class);
+        
+        // Diperjelas namanya untuk menghindari konflik
+        Route::post('/orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     });
 });
+
+// --- 4. Development Tools ---
+if (app()->environment('local')) {
+    Route::get('/dev-login/{id}', function ($id) {
+        Auth::login(User::findOrFail($id));
+        return redirect()->route('dashboard');
+    });
+
+    Route::get('/reset-semua-sesi', function () {
+        Artisan::call('optimize:clear');
+        array_map('unlink', glob(storage_path('framework/sessions/*')));
+        return "Cache dan sesi dibersihkan.";
+    });
+}
 
 require __DIR__.'/auth.php';

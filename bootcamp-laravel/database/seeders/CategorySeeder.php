@@ -7,14 +7,18 @@ use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        DB::table('product_categories')->insert([
-            ['id' => 1, 'name' => 'Laptop', 'slug' => 'laptop'],
-            ['id' => 2, 'name' => 'Aksesoris', 'slug' => 'aksesoris'],
-            ['id' => 3, 'name' => 'Smartphone', 'slug' => 'smartphone'],
-            ['id' => 4, 'name' => 'Audio', 'slug' => 'audio']
-            
+        // KOREKSI: Pastikan nama tabel di sini adalah 'categories'
+        // agar sesuai dengan file migrasi database Anda.
+        DB::table('categories')->insert([
+            ['name' => 'Laptop', 'slug' => 'laptop'],
+            ['name' => 'Aksesoris', 'slug' => 'aksesoris'],
+            ['name' => 'Smartphone', 'slug' => 'smartphone'],
+            ['name' => 'Audio', 'slug' => 'audio'],
         ]);
     }
 }
