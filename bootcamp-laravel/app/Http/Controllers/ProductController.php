@@ -16,7 +16,6 @@ class ProductController extends Controller
     // --- ADMIN METHODS ---
     public function index(): View
     {
-        // Pastikan file berada di: resources/views/admin/products/index.blade.php
         return view('admin.products.index', [
             'products' => Product::with('category')->latest()->get()
         ]);
@@ -34,8 +33,13 @@ class ProductController extends Controller
         if ($request->hasFile('image')) {
             $validated['image'] = $this->uploadImage($request->file('image'));
         }
+        
+        // Menambahkan slug agar URL produk rapi
+        $validated['slug'] = Str::slug($validated['name']);
 
         Product::create($validated);
+        
+        // Pastikan route ini sesuai dengan route name di web.php
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
@@ -51,11 +55,13 @@ class ProductController extends Controller
     {
         $validated = $this->validateProduct($request, $product->id);
 
-        DB::transaction(function () use ($request, $product, $validated) {
+        DB::transaction(function () use ($request, $product, &$validated) {
             if ($request->hasFile('image')) {
                 $this->deleteImage($product->image);
                 $validated['image'] = $this->uploadImage($request->file('image'));
             }
+            
+            $validated['slug'] = Str::slug($validated['name']);
             $product->update($validated);
         });
 
@@ -120,7 +126,6 @@ class ProductController extends Controller
     {
         $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
         $imageName = time() . '_' . $name . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
-        
         $file->move(public_path('img'), $imageName);
         return $imageName;
     }

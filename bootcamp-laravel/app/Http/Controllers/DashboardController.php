@@ -17,60 +17,60 @@ class DashboardController extends Controller
         $user = Auth::user();
         $isAdmin = $user->isAdmin();
 
-        // 1. Ringkasan Statistik (Admin lihat semua, User lihat miliknya)
+        // 1. Ringkasan Statistik
         $data = [
             'totalProduk'   => $isAdmin ? Product::count() : 0,
             'totalKategori' => $isAdmin ? Category::count() : 0,
             'totalOrder'    => $isAdmin ? Order::count() : $user->orders()->count(),
         ];
 
-        // 2. Data Grafik Transaksi
-        $endDate = Carbon::now()->endOfDay();
-        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        // 2. Data Grafik Transaksi (Inisialisasi wajib ada agar tidak error di JS)
+        $labels = [];
+        $dataOrders = [];
+        $dataRevenue = [];
 
-        $query = Order::query();
-        
-        // Filter: Jika bukan admin, hanya ambil order milik user tersebut
-        if (!$isAdmin) {
-            $query->where('user_id', $user->id);
-        }
+        if ($isAdmin) {
+            $endDate = Carbon::now()->endOfDay();
+            $startDate = Carbon::now()->subDays(6)->startOfDay();
 
-        $orders = $query->select(
-            DB::raw("DATE(created_at) as date"),
-            DB::raw('COUNT(id) as total_orders'),
-            DB::raw('SUM(total_price) as total_revenue')
-        )
-        ->where('status', '!=', 'cancelled')
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->groupBy('date')
-        ->get()
-        ->keyBy('date');
+            $orders = Order::query()
+                ->select(
+                    DB::raw("DATE(created_at) as date"),
+                    DB::raw('COUNT(id) as total_orders'),
+                    DB::raw('SUM(total_price) as total_revenue')
+                )
+                ->where('status', '!=', 'cancelled')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->groupBy('date')
+                ->get()
+                ->keyBy('date');
 
-        // (Logika loop grafik tetap sama...)
-        $grafikData = collect();
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i)->format('Y-m-d');
-            $grafikData->push([
-                'date' => $date,
-                'total_orders' => $orders->has($date) ? $orders[$date]->total_orders : 0,
-                'total_revenue' => $orders->has($date) ? (float) $orders[$date]->total_revenue : 0,
-            ]);
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $labels[] = $date;
+                $dataOrders[] = $orders->has($date) ? $orders[$date]->total_orders : 0;
+                $dataRevenue[] = $orders->has($date) ? (float) $orders[$date]->total_revenue : 0;
+            }
         }
 
         // 3. Transaksi Terbaru
-        $queryTransaksi = Order::query()->with('user');
-        if (!$isAdmin) {
-            $queryTransaksi->where('user_id', $user->id);
-        }
-        $transaksiTerbaru = $queryTransaksi->latest()->take(5)->get();
+        $transaksiTerbaru = Order::query()
+            ->with('user')
+            ->when(!$isAdmin, function ($query) use ($user) {
+                return $query->where('user_id', $user->id);
+            })
+            ->latest()
+            ->take(5)
+            ->get();
 
-        return view('dashboard', [
-            'data'             => $data,
-            'labels'           => $grafikData->pluck('date'),
-            'dataOrders'       => $grafikData->pluck('total_orders'),
-            'dataRevenue'      => $grafikData->pluck('total_revenue'),
-            'transaksiTerbaru' => $transaksiTerbaru,
-            'isAdmin'          => $isAdmin // Kirim ini ke view agar bisa tampilkan komponen yang sesuai
-        ]);
+        // Pastikan variabel dikirim ke view
+        return view('dashboard', compact(
+            'data', 
+            'labels', 
+            'dataOrders', 
+            'dataRevenue', 
+            'transaksiTerbaru', 
+            'isAdmin'
+        ));
     }
 }
