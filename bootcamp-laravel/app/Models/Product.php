@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -38,25 +37,17 @@ class Product extends Model
             'stock'       => 'integer',
             'category_id' => 'integer',
             'views'       => 'integer',
+            'deleted_at'  => 'datetime',
         ];
     }
 
     /**
-     * Booted method untuk otomatisasi slug.
+     * PENTING: Logika slug dipindahkan sepenuhnya ke Controller.
+     * Menghapus static::booted() mencegah konflik saat update/store.
      */
-    protected static function booted(): void
-    {
-        static::saving(function (Product $product) {
-            // Menggunakan isDirty untuk memeriksa perubahan pada nama
-            if ($product->isDirty('name')) {
-                $product->slug = Str::slug($product->name);
-            }
-        });
-    }
 
     /**
-     * Accessor untuk memformat harga (contoh: Rp 1.000.000)
-     * Dapat dipanggil dengan $product->formatted_price
+     * Accessor untuk memformat harga.
      */
     protected function formattedPrice(): Attribute
     {
@@ -74,7 +65,7 @@ class Product extends Model
     }
 
     /**
-     * Relasi ke Order (Many-to-Many)
+     * Relasi ke Order
      */
     public function orders(): BelongsToMany
     {

@@ -8,7 +8,6 @@
     <div class="py-12">
         <div class="max-w-4xl mx-auto px-4">
             <div class="mb-6">
-                {{-- KOREKSI: Menggunakan admin.products.index --}}
                 <a href="{{ route('admin.products.index') }}" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 font-semibold transition">
                     ← Kembali ke Katalog
                 </a>
@@ -30,7 +29,6 @@
                     <h2 class="text-3xl font-bold">Tambah Produk Baru</h2>
                 </div>
                 
-                {{-- KOREKSI: Menggunakan admin.products.store --}}
                 <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-6">
                     @csrf
                     
@@ -68,8 +66,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-600">Foto Produk</label>
-                        <input type="file" name="image" required class="w-full mt-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition cursor-pointer">
+                        <label class="block text-sm font-semibold text-slate-600">Foto Produk <span class="text-xs text-slate-400 font-normal">(Opsional)</span></label>
+                        {{-- ATRIBUT 'required' DIHAPUS agar foto menjadi opsional --}}
+                        <input type="file" name="image" class="w-full mt-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition cursor-pointer">
                     </div>
 
                     <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">

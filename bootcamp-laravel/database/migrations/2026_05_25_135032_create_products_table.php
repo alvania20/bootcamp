@@ -14,17 +14,28 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             
-            // KOREKSI: Harus diarahkan ke tabel 'categories' sesuai file migration sebelumnya
+            // Menggunakan constrained('categories') sudah benar
+            // Menambahkan index pada foreign key untuk performa query JOIN/Filter
             $table->foreignId('category_id')
                   ->constrained('categories')
-                  ->onDelete('cascade');
+                  ->onDelete('cascade'); // Produk otomatis terhapus jika kategori dihapus
             
             $table->string('name');
             $table->string('slug')->unique()->index();
             $table->text('description')->nullable();
-            $table->decimal('price', 12, 2); 
-            $table->integer('stock')->default(0);
+            
+            // Menggunakan unsignedDecimal agar harga tidak bisa negatif (proteksi data)
+            $table->unsignedDecimal('price', 12, 2); 
+            
+            // Menggunakan unsignedInteger untuk stok agar tidak bisa negatif
+            $table->unsignedInteger('stock')->default(0);
+            
+            // Image dibiarkan nullable agar bisa dibuat opsional seperti permintaan Anda
             $table->string('image')->nullable();
+            
+            // Menambahkan kolom views untuk fitur statistik (sesuai controller show)
+            $table->unsignedInteger('views')->default(0);
+            
             $table->softDeletes();
             $table->timestamps();
         });
