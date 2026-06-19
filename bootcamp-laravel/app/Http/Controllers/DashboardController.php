@@ -15,16 +15,19 @@ class DashboardController extends Controller
     public function index(): View
     {
         $user = Auth::user();
+        // Pastikan method isAdmin() ada di Model User Anda
         $isAdmin = $user->isAdmin();
 
         // 1. Ringkasan Statistik
+        // Kita tambahkan 'totalClicks' sesuai permintaan tugas
         $data = [
             'totalProduk'   => $isAdmin ? Product::count() : 0,
             'totalKategori' => $isAdmin ? Category::count() : 0,
+            'totalClicks'   => $isAdmin ? Product::sum('clicks') : 0, 
             'totalOrder'    => $isAdmin ? Order::count() : $user->orders()->count(),
         ];
 
-        // 2. Data Grafik Transaksi (Inisialisasi wajib ada agar tidak error di JS)
+        // 2. Data Grafik Transaksi
         $labels = [];
         $dataOrders = [];
         $dataRevenue = [];
@@ -63,7 +66,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Pastikan variabel dikirim ke view
         return view('dashboard', compact(
             'data', 
             'labels', 

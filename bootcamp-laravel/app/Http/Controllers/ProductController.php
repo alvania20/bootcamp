@@ -13,7 +13,18 @@ use Illuminate\Http\RedirectResponse;
 
 class ProductController extends Controller
 {
-    // --- ADMIN METHODS ---
+    /**
+     * Konstruktor untuk memisahkan akses Admin.
+     * Semua metode di dalam controller ini akan memerlukan auth dan admin,
+     * KECUALI metode katalog dan show yang bisa diakses publik.
+     */
+    public function __construct()
+    {
+        // Middleware ini memastikan hanya admin yang bisa akses method admin.
+        // Kita terapkan di routes/web.php, namun kita bisa tambahkan perlindungan di sini.
+    }
+
+    // --- ADMIN METHODS (Seharusnya hanya diakses Admin) ---
     public function index(): View
     {
         return view('admin.products.index', [
@@ -35,9 +46,7 @@ class ProductController extends Controller
                 $validated['image'] = $this->uploadImage($request->file('image'));
             }
             
-            // Generate slug unik sebelum insert
             $validated['slug'] = $this->generateUniqueSlug(Str::slug($validated['name']));
-
             Product::create($validated);
         });
         
@@ -62,7 +71,6 @@ class ProductController extends Controller
                 $validated['image'] = $this->uploadImage($request->file('image'));
             }
             
-            // Generate slug baru hanya jika nama produk berubah
             if ($product->name !== $validated['name']) {
                 $validated['slug'] = $this->generateUniqueSlug(Str::slug($validated['name']), $product->id);
             }
@@ -83,51 +91,7 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus!');
     }
 
-    // --- HELPER METHODS ---
-    
-    private function generateUniqueSlug(string $slug, ?int $ignoreId = null): string
-    {
-        $originalSlug = $slug;
-        $i = 1;
-
-        // Pengecekan slug unik dengan mempertimbangkan data yang ter-soft delete
-        while (Product::where('slug', $slug)
-            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
-            ->withTrashed() 
-            ->exists()) {
-            // Append angka, jika sudah > 5 kali percobaan, gunakan random string agar slug tetap unik
-            $slug = ($i > 5) ? $originalSlug . '-' . Str::random(5) : $originalSlug . '-' . $i++;
-        }
-
-        return $slug;
-    }
-
-    private function validateProduct(Request $request, ?int $id = null): array
-    {
-        return $request->validate([
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'description' => 'nullable|string',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
-        ]);
-    }
-
-    private function uploadImage($file): string
-    {
-        $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-        return time() . '_' . $name . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
-    }
-
-    private function deleteImage(?string $imageName): void
-    {
-        if ($imageName && File::exists(public_path('img/' . $imageName))) {
-            File::delete(public_path('img/' . $imageName));
-        }
-    }
-
-    // --- PUBLIC METHODS ---
+    // --- PUBLIC METHODS (Akses User/Tamu) ---
     public function katalog(Request $request): View
     {
         $query = Product::query();
@@ -154,7 +118,49 @@ class ProductController extends Controller
 
     public function show(Product $product): View
     {
+        // Increment views & clicks untuk statistik dashboard
         $product->increment('views');
+        $product->increment('clicks');
+        
         return view('products.show', compact('product'));
+    }
+
+    // --- HELPER METHODS ---
+    private function generateUniqueSlug(string $slug, ?int $ignoreId = null): string
+    {
+        $originalSlug = $slug;
+        $i = 1;
+        while (Product::where('slug', $slug)
+            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->withTrashed() 
+            ->exists()) {
+            $slug = ($i > 5) ? $originalSlug . '-' . Str::random(5) : $originalSlug . '-' . $i++;
+        }
+        return $slug;
+    }
+
+    private function validateProduct(Request $request, ?int $id = null): array
+    {
+        return $request->validate([
+            'name'        => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+    }
+
+    private function uploadImage($file): string
+    {
+        $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        return time() . '_' . $name . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+    }
+
+    private function deleteImage(?string $imageName): void
+    {
+        if ($imageName && File::exists(public_path('img/' . $imageName))) {
+            File::delete(public_path('img/' . $imageName));
+        }
     }
 }

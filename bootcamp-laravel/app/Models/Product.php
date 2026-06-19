@@ -15,6 +15,7 @@ class Product extends Model
 
     /**
      * Atribut yang dapat diisi secara massal.
+     * Menambahkan 'clicks' agar bisa diupdate melalui Controller.
      */
     protected $fillable = [
         'name', 
@@ -24,7 +25,8 @@ class Product extends Model
         'category_id', 
         'description', 
         'image',
-        'views'
+        'views',
+        'clicks'
     ];
 
     /**
@@ -37,14 +39,10 @@ class Product extends Model
             'stock'       => 'integer',
             'category_id' => 'integer',
             'views'       => 'integer',
+            'clicks'      => 'integer', // Tambahkan casting untuk clicks
             'deleted_at'  => 'datetime',
         ];
     }
-
-    /**
-     * PENTING: Logika slug dipindahkan sepenuhnya ke Controller.
-     * Menghapus static::booted() mencegah konflik saat update/store.
-     */
 
     /**
      * Accessor untuk memformat harga.

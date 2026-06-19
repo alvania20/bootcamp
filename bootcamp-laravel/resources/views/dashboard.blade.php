@@ -13,8 +13,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                     @php
                         $stats = [
-                            ['label' => 'Total Produk', 'value' => $data['totalProduk'] ?? 0, 'color' => 'text-gray-900'],
-                            ['label' => 'Total Klik Produk', 'value' => $data['totalKlik'] ?? 0, 'color' => 'text-indigo-600'],
+                            ['label' => 'Total Produk',   'value' => $data['totalProduk'] ?? 0,   'color' => 'text-gray-900'],
+                            ['label' => 'Total Klik',     'value' => $data['totalClicks'] ?? 0,  'color' => 'text-indigo-600'],
                             ['label' => 'Total Kategori', 'value' => $data['totalKategori'] ?? 0, 'color' => 'text-gray-900'],
                         ];
                     @endphp
@@ -71,7 +71,7 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const ctx = document.getElementById('transaksiChart');
-                if (!ctx) return; // Proteksi agar tidak error jika canvas tidak ditemukan
+                if (!ctx) return;
 
                 new Chart(ctx.getContext('2d'), {
                     type: 'line',

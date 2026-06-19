@@ -46,34 +46,43 @@
                         {{ $product->description ?? 'Tidak ada deskripsi produk.' }}
                     </div>
 
-                    {{-- Add to Cart Form --}}
-                    @if($product->stock > 0)
-                        <div class="mt-8">
-                            <form action="{{ route('cart.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                
-                                <div class="flex items-end gap-4">
-                                    <div>
-                                        <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                                        <input type="number" name="quantity" id="quantity" value="1" min="1" max="{{ $product->stock }}"
-                                               class="w-20 mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    </div>
-                                    <button type="submit" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
-                                        Tambah ke Keranjang
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    @else
-                        <div class="mt-8">
-                            <button disabled class="bg-slate-300 text-white px-8 py-3 rounded-xl font-bold cursor-not-allowed">
+                    {{-- Add to Cart Section --}}
+                    <div class="mt-8 flex justify-center md:justify-start"> @if($product->stock > 0)
+                            @auth
+                                @if(auth()->user()->isAdmin())
+                                    <p class="text-sm text-slate-500 italic bg-slate-100 p-3 rounded-lg text-center">
+                                        * Admin tidak dapat melakukan pembelian.
+                                    </p>
+                                @else
+                                    <form action="{{ route('cart.store') }}" method="POST" class="w-full">
+                                        @csrf
+                                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                        <div class="flex flex-col items-center md:flex-row md:items-end gap-4">
+                                            <div>
+                                                <label for="quantity" class="block text-sm font-medium text-gray-700 text-center">Jumlah</label>
+                                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="{{ $product->stock }}"
+                                                    class="w-20 mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-center" required>
+                                            </div>
+                                            <button type="submit" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 w-full md:w-auto">
+                                                Tambah ke Keranjang
+                                            </button>
+                                        </div>
+                                    </form>
+                                @endif
+                            @else
+                                {{-- Guest User --}}
+                                <a href="{{ route('login') }}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 w-full text-center md:w-auto">
+                                    Login untuk Membeli
+                                </a>
+                            @endauth
+                        @else
+                            <button disabled class="bg-slate-300 text-white px-8 py-3 rounded-xl font-bold cursor-not-allowed w-full md:w-auto">
                                 Produk Habis
                             </button>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+                        @endif
+                    </div>
+                </div> 
+            </div> 
+        </div> 
+    </div> 
 </x-app-layout>
