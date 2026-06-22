@@ -21,8 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 // ==================== GUEST ROUTES (Belum Login) ====================
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // REGISTRASI DINONAKTIFKAN (Agar hanya Admin yang bisa mengelola user)
+    // Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    // Route::post('register', [RegisteredUserController::class, 'store']);
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
@@ -52,6 +53,6 @@ Route::middleware('auth')->group(function () {
     // Update Password
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
-    // Logout - WAJIB metode POST
+    // Logout
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

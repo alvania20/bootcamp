@@ -72,7 +72,7 @@
                             @else
                                 {{-- Guest User --}}
                                 <a href="{{ route('login') }}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 w-full text-center md:w-auto">
-                                    Login untuk Membeli
+                                    Tambah ke Keranjang
                                 </a>
                             @endauth
                         @else
